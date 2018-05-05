@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1525539125 source:/home/aluno/Trabalho2/exemplo/main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"../include/t2fs.h"
+
+1524846527 /home/aluno/Trabalho2/include/t2fs.h
+
