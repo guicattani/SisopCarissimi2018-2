@@ -2,8 +2,36 @@
 #include "../include/apidisk.h"
 #include "../include/bitmap2.h"
 
+#include "../include/initializer.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+/**
+T2FS (volume) está dividido em cinco áreas:
+    superbloco
+    bitmap de blocos do disco livres e ocupados
+    bitmap de i-nodes livres e ocupados,
+    i-nodes
+    blocos de dados
+
+Um volume T2FS é formado por S setores (0 a S-1)
+    onde os primeiros setores armazenam as estruturas gerenciais que definem e
+    controlam a cartografia do disco T2FS, e os setores restantes são agrupados,
+    n a n, formando um bloco de dados
+
+    Portanto, os blocos T2FS são formados por n setores contíguos e são numerados de 0 a B-1,
+    onde B é o número total de blocos no disco. Esses valores são fornecidos no superbloco
+    (ver tabela 1 na especificação)
+
+**/
+
+bool initialized = false;
+
+#define SIZEIDENTIFY 67
+#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887\nGabriel Warken 179787\n"
 
 /*-----------------------------------------------------------------------------
 Função: Usada para identificar os desenvolvedores do T2FS.
@@ -19,8 +47,18 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int identify2 (char *name, int size) {
-    //TODO implementação
-    return 0;
+    initializeLibrary();
+
+    if(size < SIZEIDENTIFY) {
+        return ERROR;
+    }
+
+    int index = 0;
+    while ((name[index] = GROUPNAMESTRING[index]) != '\0') {
+        index++;
+    }
+
+    return SUCCESS;
 }
 
 
@@ -38,6 +76,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle do arq
 	Em caso de erro, deve ser retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 FILE2 create2 (char *filename) {
+     if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -53,6 +93,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int delete2 (char *filename) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -73,6 +115,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle do arq
 	Em caso de erro, deve ser retornado um valor negativo
 -----------------------------------------------------------------------------*/
 FILE2 open2 (char *filename) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -87,6 +131,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int close2 (FILE2 handle) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -106,6 +152,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número de byt
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int read2 (FILE2 handle, char *buffer, int size) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -124,6 +172,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número de byt
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int write2 (FILE2 handle, char *buffer, int size) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -141,6 +191,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int truncate2 (FILE2 handle) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -160,6 +212,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int seek2 (FILE2 handle, DWORD offset) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -178,6 +232,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int mkdir2 (char *pathname) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -199,6 +255,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int rmdir2 (char *pathname) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -217,6 +275,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int chdir2 (char *pathname) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -237,6 +297,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int getcwd2 (char *pathname, int size) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -256,6 +318,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o identificador
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 DIR2 opendir2 (char *pathname) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -277,6 +341,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero ( e "dentry" não será válido)
 -----------------------------------------------------------------------------*/
 int readdir2 (DIR2 handle, DIRENT2 *dentry) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
 }
@@ -291,10 +357,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int closedir2 (DIR2 handle) {
+    if(!initialized)
+        initialized = initializeLibrary();
     //TODO implementação
     return 0;
-}
-
-void testMe () {
-    printf("OLAR PESSOA PARTE DOIS");
 }

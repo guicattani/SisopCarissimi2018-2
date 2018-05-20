@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1525749915 source:/home/aluno/Trabalho2/DebugConsole/main.c
+1526836639 source:/home/aluno/Trabalho2/DebugConsole/main.c
 	<stdio.h>
 	<stdlib.h>
 	"../include/t2fs.h"
