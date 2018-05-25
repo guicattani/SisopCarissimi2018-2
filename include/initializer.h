@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include "t2fs.h"
 
-#define ERROR -1;
-#define SUCCESS 0;
+#define ERROR -1
+#define SUCCESS 0
 
 #define N_OPENFILES 20
 #define N_OPENDIRECTORIES 50
@@ -39,9 +39,12 @@ typedef struct s_Control {
 	OPENDIRECTORY openDirectoriesArray[N_OPENDIRECTORIES];
 	int N_OpenFiles;
 	int N_OpenDirectories;
+	int freeBlockBitmap;
+	int freeInodeBitmap;
 
 } t_control;
 
 
 t_control* initializeLibrary();
-bool bootFileSystem();
+bool bootFileSystemController();
+bool fillBitmaps();

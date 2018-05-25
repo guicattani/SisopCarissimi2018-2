@@ -9,7 +9,12 @@ int main()
     printf("Hello world!\n");
 
     char groupName[SIZEIDENTIFY+1];
-    identify2 (groupName, SIZEIDENTIFY);
+    int errorCode = identify2 (groupName, SIZEIDENTIFY);
+
+    if(errorCode == ERROR) {
+        printf("Main error");
+        return -1;
+    }
 
     printf ("Nome do grupo:\n%s\n", groupName);
 

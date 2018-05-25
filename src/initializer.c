@@ -14,11 +14,18 @@ t_control* controller;
 t_control* initializeLibrary() {
     controller = (t_control*) malloc(sizeof(t_control));
 
-    bootFileSystem();
+    bool errorCode = bootFileSystemController();
+    if(errorCode == ERROR)
+        return NULL;
+
+    errorCode = fillBitmaps();
+    if(errorCode == ERROR)
+        return NULL;
+
     return controller;
 }
 
-bool bootFileSystem()
+bool bootFileSystemController()
 {
 
     unsigned char buffer[256];
@@ -35,6 +42,8 @@ bool bootFileSystem()
     index += sizeof(WORD);
     memcpy(&controller->boot.superblockSize,buffer+index,sizeof(WORD));
     index += sizeof(WORD);
+    memcpy(&controller->boot.freeBlocksBitmapSize,buffer+index,sizeof(WORD));
+    index += sizeof(WORD);
     memcpy(&controller->boot.freeInodeBitmapSize,buffer+index,sizeof(WORD));
     index += sizeof(WORD);
     memcpy(&controller->boot.inodeAreaSize,buffer+index,sizeof(WORD));
@@ -44,13 +53,14 @@ bool bootFileSystem()
     memcpy(&controller->boot.diskSize,buffer+index,sizeof(DWORD));
 
     printf("Boot Data:\n");
-    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
+    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeBlocksBitmapSize :%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
            controller->boot.id[0],
            controller->boot.id[1],
            controller->boot.id[2],
            controller->boot.id[3],
            controller->boot.version,
            controller->boot.superblockSize,
+           controller->boot.freeBlocksBitmapSize,
            controller->boot.freeInodeBitmapSize,
            controller->boot.inodeAreaSize,
            controller->boot.blockSize,
@@ -65,6 +75,30 @@ bool bootFileSystem()
         fprintf(stderr, "File system id is invalid.\n");
         return ERROR;
     }
+
+    return SUCCESS;
+}
+
+bool fillBitmaps() {
+
+    if(controller == NULL)
+        return ERROR;
+
+    unsigned char buffer[256];
+
+    if(read_sector(1, buffer) != 0) {
+        fprintf(stderr, "Falha ao ler setor do disco.\n");
+        return ERROR;
+    }
+
+    controller->freeBlockBitmap = (int) buffer;
+
+    if(read_sector(1, buffer) != 0) {
+        fprintf(stderr, "Falha ao ler setor do disco.\n");
+        return ERROR;
+    }
+
+    controller->freeInodeBitmap = (int) buffer;
 
     return SUCCESS;
 }
