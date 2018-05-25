@@ -9,6 +9,13 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define SIZEIDENTIFY 67
+#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887\nGabriel Warken 179787\n"
+
+bool initialized = false;
+
+t_control* controller;
+
 /**
 T2FS (volume) está dividido em cinco áreas:
     superbloco
@@ -28,10 +35,6 @@ Um volume T2FS é formado por S setores (0 a S-1)
 
 **/
 
-bool initialized = false;
-
-#define SIZEIDENTIFY 67
-#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887\nGabriel Warken 179787\n"
 
 /*-----------------------------------------------------------------------------
 Função: Usada para identificar os desenvolvedores do T2FS.
@@ -47,7 +50,7 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int identify2 (char *name, int size) {
-    initializeLibrary();
+    initializeLibrary(&controller);
 
     if(size < SIZEIDENTIFY) {
         return ERROR;

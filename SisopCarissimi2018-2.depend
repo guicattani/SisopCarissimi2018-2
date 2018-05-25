@@ -7,14 +7,20 @@
 
 1525750403 /home/aluno/Trabalho2/include/t2fs.h
 
-1525750216 source:/home/aluno/Trabalho2/src/t2fs.c
+1526838826 source:/home/aluno/Trabalho2/src/t2fs.c
 	"../include/t2fs.h"
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
+	"../include/initializer.h"
 	<stdio.h>
 	<stdlib.h>
+	<string.h>
+	<stdbool.h>
 
 1477532272 /home/aluno/Trabalho2/include/apidisk.h
 
 1477956428 /home/aluno/Trabalho2/include/bitmap2.h
+
+1526838760 /home/aluno/Trabalho2/include/initializer.h
+	<stdbool.h>
 
