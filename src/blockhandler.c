@@ -23,6 +23,8 @@ int inodesStartBlock;
 int blocksStartSector;
 int blocksStartBlock;
 
+//TODO documentação
+
 bool initializeBeingWorkedBlock(t_control* controller){
     blockSize                     = controller->boot.blockSize;
 

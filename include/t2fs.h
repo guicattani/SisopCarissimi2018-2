@@ -73,11 +73,8 @@ typedef struct {
 
 typedef struct openDirectory {
     bool valid;
-    DWORD currentEntry;
-    DWORD blocksSize;
-    DWORD bytesSize;
+    DWORD bytesFileSize;
     struct t2fs_record* directoryRecord;
-    char name[MAX_FILE_NAME_SIZE];
 } t_openDirectory;
 
 typedef struct openFile {
@@ -85,8 +82,6 @@ typedef struct openFile {
     DWORD currentPointer;
     struct t2fs_inode*   fileInode;
     struct t2fs_record*  fileRecord;
-    struct t2fs_record*  fatherDirectory;
-    char name[MAX_FILE_NAME_SIZE];
 } t_openFile;
 
 typedef struct controlStruct {
@@ -358,11 +353,15 @@ Entra:	handle -> identificador do diretório que se deseja fechar (encerrar a op
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
+
+//TODO documentação
 int closedir2 (DIR2 handle);
 
 bool printRecords();
 
-bool isHandleValid(FILE2 handle);
+bool isFileHandleValid(FILE2 handle);
+
+bool isDirectoryHandleValid(DIR2 handle);
 
 bool checkInitialization();
 #endif

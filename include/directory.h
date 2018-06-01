@@ -13,9 +13,9 @@ void printerOfTree(int level, int inodeNumber) ;
 
 void printSubDirectories(int level, DWORD dataPointer);
 
-bool relativePathExists(char* path, struct t2fs_record* directory);
+struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory);
 
-bool absolutePathExists();
+struct t2fs_record* findRecordOfPath();
 
 //upperDirectoryInode should be first used with -1
 void getPathToDirectory(struct t2fs_record* directory, char* completePath, int upperDirectoryInode);

@@ -24,6 +24,6 @@
 t_control* initializeLibrary();
 bool bootFileSystemController();
 bool fillBitmaps();
-bool initializeDirectories();
-
+bool initializeOpenedDirectories();
+bool initializeOpenedFiles();
 #endif

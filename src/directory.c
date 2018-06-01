@@ -11,6 +11,8 @@
 int accessedDirectories[256];
 int counterForAccessedDirectories;
 
+//TODO documentação
+
 void printDirectoryTree() {
     printf(".\n");
     accessedDirectories[0] = 0;
@@ -73,16 +75,15 @@ void printSubDirectories(int level, DWORD dataPointer) {
     free(records);
 }
 
-bool relativePathExists(char* path, struct t2fs_record* directory) {
+struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory) {
     if(directory->TypeVal != TYPEVAL_DIRETORIO || directory == NULL)
-        return false;
+        return NULL;
 
     if(!strcmp(path, ".") || !strcmp(path, "..") || !strcmp(path, "./") || !strcmp(path, "../") || !strcmp(path, "/") || strlen(path) == 0)
-        return true;
+        return directory;
 
-    bool found = false;
     int index;
-
+    struct t2fs_record* recordOfPath = NULL;
     struct t2fs_record* records;
 
     char* position;
@@ -126,23 +127,23 @@ bool relativePathExists(char* path, struct t2fs_record* directory) {
     for(index = 0; index < 16; index++) {
         if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
                 if(!strcmp(dirBeingLookedFor, records[index].name))
-                    found = relativePathExists(restOfThePath, &records[index]);
+                    recordOfPath = relativePathExists(restOfThePath, &records[index]);
         }
     }
-    return found;
+    return recordOfPath;
 }
 
-bool absolutePathExists(char* path) {
+struct t2fs_record* findRecordOfPath(char* path) {
     struct t2fs_record* record;
 
     if(path[0] != '/')
-        return ERROR;
+        return NULL;
 
     getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
-    bool status = relativePathExists(&path[1] , record);
-    return status;
+    struct t2fs_record* returnRecord = relativePathExists(&path[1] , record);
+    return returnRecord;
 }
 
 void getPathToDirectory(struct t2fs_record* directory, char* completePath, int upperDirectoryInode) {

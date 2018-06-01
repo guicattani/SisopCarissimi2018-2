@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+//TODO documentação
+
 t_control* initializeLibrary() {
     controller = malloc(sizeof(t_control));
     rootDirectory =  malloc(sizeof(struct t2fs_record));
@@ -19,6 +21,9 @@ t_control* initializeLibrary() {
 
     beingWorkedRecord = malloc(sizeof(struct t2fs_record));
     beingWorkedInode = malloc(sizeof(struct t2fs_inode));
+
+    initializeOpenedDirectories();
+    initializeOpenedFiles();
 
     bool errorCode;
 
@@ -40,12 +45,15 @@ t_control* initializeLibrary() {
     *rootDirectory = *record;
     *currentDirectory = *record;
 
-//    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
-//    if(status)
-//        printf("found it!!!!!");
-//
-    bool status = absolutePathExists("/dir1/dir12/");
-//    bool status = relativePathExists("./dir1/dir12/", rootDirectory);
+    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
+    if(status)
+        printf("found it!!!!!");
+
+    struct t2fs_record* status = findRecordOfPath("/dir1/dir12/");
+    if(status)
+        printf("found it!!!!!");
+
+    status = relativePathExists("./dir1/dir12/", rootDirectory);
     if(status)
         printf("found it!!!!!");
 
@@ -133,11 +141,18 @@ bool fillBitmaps() {
     return SUCCESS;
 }
 
-bool initializeDirectories() {
+bool initializeOpenedDirectories() {
+    int index;
+    for(index = 0; index < MAX_OPEN_DIRECTORIES; index++) {
+        openedDirectories[index].valid = false;
+    }
+    return SUCCESS;
+}
 
-    //read root inode
-    //get first inode
-    //read inode contents, records
-    //update cwd
+bool initializeOpenedFiles() {
+    int index;
+    for(index = 0; index < MAX_OPEN_FILES; index++) {
+        openedFiles[index].valid = false;
+    }
     return SUCCESS;
 }

@@ -1,5 +1,7 @@
 #include "../include/t2fs.h"
 #include "../include/initializer.h"
+#include "../include/directory.h"
+#include "../include/inodehandler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,14 +129,15 @@ Entra:	handle -> identificador do arquivo a ser fechado
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int close2 (FILE2 handle) {
+int close2 (FILE2 handle) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
-    if(!isHandleValid(handle))
+    if(!isFileHandleValid(handle))
         return ERROR;
 
-    //TODO implementação
+    openedFiles[handle].valid = false;
+
     return SUCCESS;
 }
 
@@ -156,7 +159,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
     if(checkInitialization())
         return ERROR;
 
-    if(!isHandleValid(handle))
+    if(!isFileHandleValid(handle))
         return ERROR;
     //TODO implementação
     return SUCCESS;
@@ -179,7 +182,7 @@ int write2 (FILE2 handle, char *buffer, int size) {
     if(checkInitialization())
         return ERROR;
 
-    if(!isHandleValid(handle))
+    if(!isFileHandleValid(handle))
         return ERROR;
 
     //TODO implementação
@@ -199,12 +202,12 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int truncate2 (FILE2 handle) { //cuidado que é inclusive
-//    if(checkInitialization())
-//        return ERROR;
-//
-//    if(!isHandleValid(handle))
-//        return ERROR;
-//
+    if(checkInitialization())
+        return ERROR;
+
+    if(!isFileHandleValid(handle))
+        return ERROR;
+
 //    if(openedFiles[handle].fileInode->blocksFileSize >= 0)
 //        return ERROR;
 //
@@ -231,7 +234,7 @@ int truncate2 (FILE2 handle) { //cuidado que é inclusive
 //    else
 //        return ERROR; //more than one block per file
 
-
+//TODO implementação
 
     return SUCCESS;
 }
@@ -250,11 +253,11 @@ Entra:	handle -> identificador do arquivo a ser escrito
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int seek2 (FILE2 handle, DWORD offset) {
+int seek2 (FILE2 handle, DWORD offset) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
-    if(!isHandleValid(handle) || offset < -1);
+    if(!isFileHandleValid(handle) || offset < -1);
         return ERROR;
 
     if(offset >= 0)
@@ -322,11 +325,22 @@ Entra:	pathname -> caminho do novo diretório de trabalho.
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int chdir2 (char *pathname) {
+int chdir2 (char *pathname) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
-    //TODO implementação
+    struct t2fs_record* recordOfPath;
+
+    recordOfPath = findRecordOfPath(pathname);
+
+    if(recordOfPath && (pathname[0] == '.' && (pathname[1] == '.' || pathname[1] == '/' )) )
+        recordOfPath = relativePathExists(pathname, recordOfPath);
+
+    if(recordOfPath == NULL)
+        return ERROR;
+
+    *currentDirectory = *recordOfPath;
+
     return SUCCESS;
 }
 
@@ -345,7 +359,7 @@ Entra:	pathname -> buffer para onde copiar o pathname do diretório de trabalho
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int getcwd2 (char *pathname, int size) {
+int getcwd2 (char *pathname, int size) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
@@ -368,12 +382,39 @@ Entra:	pathname -> caminho do diretório a ser aberto
 Saída:	Se a operação foi realizada com sucesso, a função retorna o identificador do diretório (handle).
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
-DIR2 opendir2 (char *pathname) {
+DIR2 opendir2 (char *pathname) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
-    //TODO implementação
-    return SUCCESS;
+    struct t2fs_record* recordOfPath;
+    recordOfPath = findRecordOfPath(pathname);
+
+    if(recordOfPath == NULL)
+        return ERROR;
+
+    int index;
+    int emptySpace = -1;
+    for(index = 0; index < MAX_OPEN_DIRECTORIES; index++) {
+        if(openedDirectories[index].valid == true) {
+            if(openedDirectories[index].directoryRecord == recordOfPath) {
+                return ERROR;
+            }
+        }
+        else if(emptySpace == -1)
+            emptySpace = index;
+    }
+
+    struct openDirectory* newOpenedDirectory = malloc(sizeof(struct openDirectory));
+
+    getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
+
+    newOpenedDirectory->valid = true;
+    newOpenedDirectory->bytesFileSize = beingWorkedInode->bytesFileSize;
+    *newOpenedDirectory->directoryRecord = *recordOfPath;
+
+    openedDirectories[emptySpace] = *newOpenedDirectory;
+
+    return emptySpace;
 }
 
 
@@ -396,7 +437,7 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
     if(checkInitialization())
         return ERROR;
 
-    if(!isHandleValid(handle))
+    if(!isDirectoryHandleValid(handle))
         return ERROR;
 
     //TODO implementação
@@ -412,14 +453,20 @@ Entra:	handle -> identificador do diretório que se deseja fechar (encerrar a op
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int closedir2 (DIR2 handle) {
+int closedir2 (DIR2 handle) {//TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
-    //TODO implementação
+    if(!isDirectoryHandleValid(handle))
+        return ERROR;
+
+    openedDirectories[handle].valid = false;
+
     return SUCCESS;
 }
 
+/*-----------------------------------------------------------------------------*/
+//TODO documentação
 bool printRecords(struct t2fs_record* records) {
     if (records == NULL)
         return ERROR;
@@ -439,8 +486,14 @@ bool printRecords(struct t2fs_record* records) {
     return SUCCESS;
 }
 
-bool isHandleValid(FILE2 handle) {
+bool isFileHandleValid(FILE2 handle) {
     if (handle >= 0 && handle <= MAX_OPEN_FILES)
+        return true;
+    else
+        return false;
+}
+bool isDirectoryHandleValid(DIR2 handle) {
+    if (handle >= 0 && handle <= MAX_OPEN_DIRECTORIES)
         return true;
     else
         return false;

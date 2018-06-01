@@ -7,6 +7,8 @@
 #include "../include/inodehandler.h"
 #include "../include/blockhandler.h"
 
+//TODO documentação
+
 bool getInodeToBeingWorkedInode(int inodeIndex) {
     int upperDiskBlocks = controller->boot.superblockSize
                         + controller->boot.freeBlocksBitmapSize
