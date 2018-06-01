@@ -3,18 +3,28 @@
 #include "../include/bitmap2.h"
 
 #include "../include/initializer.h"
+#include "../include/directory.h"
+#include "../include/inodehandler.h"
+#include "../include/blockhandler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
-t_control* controller;
-
 t_control* initializeLibrary() {
     controller = (t_control*) malloc(sizeof(t_control));
+    rootDirectory =  malloc(sizeof(struct t2fs_record*));
+    currentDirectory = malloc(sizeof(struct t2fs_record*));
 
-    bool errorCode = bootFileSystemController();
+    beingWorkedRecord = malloc(sizeof(struct t2fs_record*));
+    beingWorkedInode = malloc(sizeof(struct t2fs_inode*));
+
+    bool errorCode;
+
+    struct t2fs_record* record;
+
+    errorCode = bootFileSystemController();
     if(errorCode == ERROR)
         return NULL;
 
@@ -22,6 +32,42 @@ t_control* initializeLibrary() {
     if(errorCode == ERROR)
         return NULL;
 
+    initializeBeingWorkedBlock(controller);
+
+    printDirectoryTree(0, 0);
+
+    getInodeToBeingWorkedInode(0);
+
+    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+
+    memcpy(rootDirectory,record, sizeof(record));
+    memcpy(currentDirectory,rootDirectory, sizeof(rootDirectory));
+
+    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
+    if(status)
+        printf("found it!!!!!");
+
+    getInodeToBeingWorkedInode(5);
+    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+
+    //getcwd2()
+
+//
+//    printf("PRINTING INODE 0 \n");
+//    getInodeToBeingWorkedInode(0);
+//    printInodeContentFromBeingWorkedInode();
+//    printf("PRINTING INODE 1 \n");
+//    getInodeToBeingWorkedInode(1);
+//    printInodeContentFromBeingWorkedInode();
+//    printf("PRINTING INODE 4 \n");
+//    getInodeToBeingWorkedInode(4);
+//    printInodeContentFromBeingWorkedInode();
+
+    //readBlockToBeingWorkedBlock(3); // first inode
+
+
+
+    //printInodeContentFromBeingWorkedBlock(4);
     return controller;
 }
 
@@ -53,7 +99,7 @@ bool bootFileSystemController()
     memcpy(&controller->boot.diskSize,buffer+index,sizeof(DWORD));
 
     printf("Boot Data:\n");
-    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeBlocksBitmapSize :%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
+    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeBlocksBitmapSize:%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
            controller->boot.id[0],
            controller->boot.id[1],
            controller->boot.id[2],
@@ -84,7 +130,7 @@ bool fillBitmaps() {
     if(controller == NULL)
         return ERROR;
 
-    unsigned char buffer[256];
+    unsigned char buffer[SECTOR_SIZE];
 
     if(read_sector(1, buffer) != 0) {
         fprintf(stderr, "Falha ao ler setor do disco.\n");
@@ -100,5 +146,14 @@ bool fillBitmaps() {
 
     controller->freeInodeBitmap = (int) buffer;
 
+    return SUCCESS;
+}
+
+bool initializeDirectories() {
+
+    //read root inode
+    //get first inode
+    //read inode contents, records
+    //update cwd
     return SUCCESS;
 }

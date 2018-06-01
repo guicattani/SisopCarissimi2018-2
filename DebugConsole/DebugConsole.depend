@@ -1,8 +1,29 @@
 # depslib dependency file v1.0
-1526836639 source:/home/aluno/Trabalho2/DebugConsole/main.c
+1527617460 source:/home/aluno/Trabalho2/DebugConsole/main.c
 	<stdio.h>
 	<stdlib.h>
 	"../include/t2fs.h"
 
-1525750403 /home/aluno/Trabalho2/include/t2fs.h
+1527824235 /home/aluno/Trabalho2/include/t2fs.h
+	<stdbool.h>
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+
+1477532272 /home/aluno/Trabalho2/include/apidisk.h
+
+1477956428 /home/aluno/Trabalho2/include/bitmap2.h
+
+1527811416 source:/home/aluno/Trabalho2 0106/DebugConsole/main.c
+	<stdio.h>
+	<stdlib.h>
+	"../include/t2fs.h"
+
+1527824235 /home/aluno/Trabalho2 0106/include/t2fs.h
+	<stdbool.h>
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+
+1477532272 /home/aluno/Trabalho2 0106/include/apidisk.h
+
+1477956428 /home/aluno/Trabalho2 0106/include/bitmap2.h
 

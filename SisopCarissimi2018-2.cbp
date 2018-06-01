@@ -33,7 +33,19 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="src/blockhandler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/directory.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="src/initializer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/inodehandler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/stringfunctions.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/t2fs.c">

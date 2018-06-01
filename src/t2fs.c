@@ -1,7 +1,4 @@
 #include "../include/t2fs.h"
-#include "../include/apidisk.h"
-#include "../include/bitmap2.h"
-
 #include "../include/initializer.h"
 
 #include <stdio.h>
@@ -9,12 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define SIZEIDENTIFY 67
-#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887\nGabriel Warken 179787\n"
-
 bool initialized = false;
-
-t_control* controller;
 
 /**
 T2FS (volume) está dividido em cinco áreas:
@@ -35,7 +27,6 @@ Um volume T2FS é formado por S setores (0 a S-1)
 
 **/
 
-
 /*-----------------------------------------------------------------------------
 Função: Usada para identificar os desenvolvedores do T2FS.
 	Essa função copia um string de identificação para o ponteiro indicado por "name".
@@ -50,16 +41,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int identify2 (char *name, int size) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+   if(checkInitialization())
+        return ERROR;
 
     if(size < SIZEIDENTIFY)
         return ERROR;
@@ -79,7 +62,7 @@ Função: Criar um novo arquivo.
 	O contador de posição do arquivo (current pointer) deve ser colocado na posição zero.
 	Caso já exista um arquivo ou diretório com o mesmo nome, a função deverá retornar um erro de criação.
 	A função deve retornar o identificador (handle) do arquivo.
-	Esse handle será usado em chamadas posteriores do sistema de arquivo para fins de manipulação do arquivo criado.
+	DIR_tEsse handle será usado em chamadas posteriores do sistema de arquivo para fins de manipulação do arquivo criado.
 
 Entra:	filename -> nome do arquivo a ser criado.
 
@@ -87,19 +70,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle d
 	Em caso de erro, deve ser retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 FILE2 create2 (char *filename) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -113,19 +88,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int delete2 (char *filename) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -144,19 +111,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle d
 	Em caso de erro, deve ser retornado um valor negativo
 -----------------------------------------------------------------------------*/
 FILE2 open2 (char *filename) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -169,19 +128,14 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int close2 (FILE2 handle) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(!isHandleValid(handle))
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -199,18 +153,13 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número 
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int read2 (FILE2 handle, char *buffer, int size) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(!isHandleValid(handle))
+        return ERROR;
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -227,19 +176,14 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número 
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int write2 (FILE2 handle, char *buffer, int size) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(!isHandleValid(handle))
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -254,20 +198,42 @@ Entra:	handle -> identificador do arquivo a ser truncado
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int truncate2 (FILE2 handle) {
-    if(!initialized) {
-        controller = initializeLibrary();
+int truncate2 (FILE2 handle) { //cuidado que é inclusive
+//    if(checkInitialization())
+//        return ERROR;
+//
+//    if(!isHandleValid(handle))
+//        return ERROR;
+//
+//    if(openedFiles[handle].fileInode->blocksFileSize >= 0)
+//        return ERROR;
+//
+//    if(openedFiles[handle].fileInode->blocksFileSize == 1) {
+//        //cria bloco de 0s
+//        //copia inicio do bloco atual até o ponteiro
+//        //escreve bloco na memória
+//
+//        int range = openedFiles[handle].currentPointer;
+//
+//        //readBlockToBeingWorkedBlock(openedFiles[handle].fileInode);
+//
+//        printf("size of beingWorkedBlock %d", sizeof(beingWorkedBlock) );
+//
+//        char blockFilledWithZeroes[controller->boot.blockSize * SECTOR_SIZE];
+//        memset(blockFilledWithZeroes, 0, sizeof(blockFilledWithZeroes));
+//        memcpy(blockFilledWithZeroes, beingWorkedBlock, range);
+//
+//        memcpy(beingWorkedBlock, blockFilledWithZeroes, sizeof(beingWorkedBlock));
+//        //writeBeingWorkedBlock()
+//
+//
+//    }
+//    else
+//        return ERROR; //more than one block per file
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
 
-    //TODO implementação
-    return 0;
+
+    return SUCCESS;
 }
 
 
@@ -285,19 +251,18 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int seek2 (FILE2 handle, DWORD offset) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(!isHandleValid(handle) || offset < -1);
+        return ERROR;
 
-    //TODO implementação
-    return 0;
+    if(offset >= 0)
+        openedFiles[handle].currentPointer = offset;
+    else if (offset == -1)
+        openedFiles[handle].currentPointer = openedFiles[handle].fileInode->bytesFileSize - 1;
+
+    return SUCCESS;
 }
 
 
@@ -314,18 +279,10 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int mkdir2 (char *pathname) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -345,19 +302,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int rmdir2 (char *pathname) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -374,19 +323,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int chdir2 (char *pathname) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -405,19 +346,12 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int getcwd2 (char *pathname, int size) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    getPathToDirectory(currentDirectory, pathname, -1);
 
-    //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -435,19 +369,11 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o identifi
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 DIR2 opendir2 (char *pathname) {
-    if(!initialized) {
-        controller = initializeLibrary();
-
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(checkInitialization())
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -467,19 +393,14 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero ( e "dentry" não será válido)
 -----------------------------------------------------------------------------*/
 int readdir2 (DIR2 handle, DIRENT2 *dentry) {
-    if(!initialized) {
-        controller = initializeLibrary();
+    if(checkInitialization())
+        return ERROR;
 
-        if(controller == NULL){
-            return ERROR;
-        }
-        else {
-            initialized = true;
-        }
-    }
+    if(!isHandleValid(handle))
+        return ERROR;
 
     //TODO implementação
-    return 0;
+    return SUCCESS;
 }
 
 
@@ -492,17 +413,49 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int closedir2 (DIR2 handle) {
+    if(checkInitialization())
+        return ERROR;
+
+    //TODO implementação
+    return SUCCESS;
+}
+
+bool printRecords(struct t2fs_record* records) {
+    if (records == NULL)
+        return ERROR;
+
+    int index;
+
+    for(index = 0; index < 16; index++) {
+        if(records[index].TypeVal == TYPEVAL_REGULAR || records[index].TypeVal == TYPEVAL_DIRETORIO ) //&& beingWorkedRecord->inodeNumber != INVALID_PTR
+        {
+         printf("Type Value: \t0x0%X (0x01 file, 0x02 dir)\n" ,records[index].TypeVal);
+         printf("name: \t\t%s\n", records[index].name);
+         printf("i-node-number:  %d\n", records[index].inodeNumber);
+         putchar('\n');
+        }
+    }
+
+    return SUCCESS;
+}
+
+bool isHandleValid(FILE2 handle) {
+    if (handle >= 0 && handle <= MAX_OPEN_FILES)
+        return true;
+    else
+        return false;
+}
+
+bool checkInitialization() {
     if(!initialized) {
         controller = initializeLibrary();
 
         if(controller == NULL){
             return ERROR;
         }
-        else {
-            initialized = true;
-        }
+
+        initialized = true;
     }
 
-    //TODO implementação
-    return 0;
+    return SUCCESS;
 }

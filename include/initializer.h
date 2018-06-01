@@ -1,6 +1,5 @@
-/*
- * initializer.h: Responsible for initializing the library
- */
+#ifndef INITIALIZER_H
+#define INITIALIZER_H
 
 #include <stdbool.h>
 #include "t2fs.h"
@@ -11,40 +10,20 @@
 #define N_OPENFILES 20
 #define N_OPENDIRECTORIES 50
 
-typedef struct openFile{
-	int valid;
-	DWORD MFT;
-	DWORD fatherMFT;
-	DWORD currentPointer;
-	DWORD blocksSize;
-	DWORD bytesSize;
-	char name[MAX_FILE_NAME_SIZE];
-
-}OPENFILE;
-
-typedef struct openDirectory{
-	int valid;
-	DWORD MFT;
-	DWORD currentEntry;
-	DWORD blocksSize;
-	DWORD bytesSize;
-	char name[MAX_FILE_NAME_SIZE];
-
-}OPENDIRECTORY;
-
-typedef struct s_Control {
-
-	struct t2fs_superbloco boot;
-	OPENFILE openFilesArray[N_OPENFILES];
-	OPENDIRECTORY openDirectoriesArray[N_OPENDIRECTORIES];
-	int N_OpenFiles;
-	int N_OpenDirectories;
-	int freeBlockBitmap;
-	int freeInodeBitmap;
-
-} t_control;
-
+//typedef struct openFileStruct{
+//	int valid;
+//	DWORD MFT;
+//	DWORD fatherMFT;
+//	DWORD currentPointer;
+//	DWORD blocksSize;
+//	DWORD bytesSize;
+//	char name[MAX_FILE_NAME_SIZE];
+//
+//}t_openfile;
 
 t_control* initializeLibrary();
 bool bootFileSystemController();
 bool fillBitmaps();
+bool initializeDirectories();
+
+#endif

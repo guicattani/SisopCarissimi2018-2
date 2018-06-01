@@ -1,34 +1,168 @@
 # depslib dependency file v1.0
-1525539125 source:/home/aluno/Trabalho2/exemplo/main.c
-	<stdio.h>
-	<stdlib.h>
-	<string.h>
-	"../include/t2fs.h"
-
-1525750403 /home/aluno/Trabalho2/include/t2fs.h
-
-1526838826 source:/home/aluno/Trabalho2/src/t2fs.c
+1527822287 source:/home/aluno/Trabalho2/src/blockhandler.c
 	"../include/t2fs.h"
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
+	"../include/initializer.h"
+	"../include/blockhandler.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1527824235 /home/aluno/Trabalho2/include/t2fs.h
+	<stdbool.h>
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+
+1477532272 /home/aluno/Trabalho2/include/apidisk.h
+
+1477956428 /home/aluno/Trabalho2/include/bitmap2.h
+
+1527810258 /home/aluno/Trabalho2/include/initializer.h
+	<stdbool.h>
+	"t2fs.h"
+
+1527810206 /home/aluno/Trabalho2/include/blockhandler.h
+	<stdbool.h>
+	"t2fs.h"
+	"initializer.h"
+
+1527826638 source:/home/aluno/Trabalho2/src/directory.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+	"../include/directory.h"
+	"../include/stringfunctions.h"
+
+1527810550 /home/aluno/Trabalho2/include/inodehandler.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"t2fs.h"
+
+1527824740 /home/aluno/Trabalho2/include/directory.h
+	<stdbool.h>
+	"t2fs.h"
+
+1527543168 /home/aluno/Trabalho2/include/stringfunctions.h
+
+1527826544 source:/home/aluno/Trabalho2/src/initializer.c
+	"../include/t2fs.h"
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+	"../include/initializer.h"
+	"../include/directory.h"
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1527820554 source:/home/aluno/Trabalho2/src/inodehandler.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"../include/t2fs.h"
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+
+1527545983 source:/home/aluno/Trabalho2/src/stringfunctions.c
+	<string.h>
+
+1527825557 source:/home/aluno/Trabalho2/src/t2fs.c
+	"../include/t2fs.h"
 	"../include/initializer.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<stdbool.h>
 
-1477532272 /home/aluno/Trabalho2/include/apidisk.h
-
-1477956428 /home/aluno/Trabalho2/include/bitmap2.h
-
-1527252721 /home/aluno/Trabalho2/include/initializer.h
-	<stdbool.h>
-	"t2fs.h"
-
-1527258272 source:/home/aluno/Trabalho2/src/initializer.c
+1527822287 source:/home/aluno/Trabalho2 0106/src/blockhandler.c
 	"../include/t2fs.h"
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
+	"../include/initializer.h"
+	"../include/blockhandler.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1527824235 /home/aluno/Trabalho2 0106/include/t2fs.h
+	<stdbool.h>
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+
+1477532272 /home/aluno/Trabalho2 0106/include/apidisk.h
+
+1477956428 /home/aluno/Trabalho2 0106/include/bitmap2.h
+
+1527810258 /home/aluno/Trabalho2 0106/include/initializer.h
+	<stdbool.h>
+	"t2fs.h"
+
+1527810206 /home/aluno/Trabalho2 0106/include/blockhandler.h
+	<stdbool.h>
+	"t2fs.h"
+	"initializer.h"
+
+1527826918 source:/home/aluno/Trabalho2 0106/src/directory.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+	"../include/directory.h"
+	"../include/stringfunctions.h"
+
+1527810550 /home/aluno/Trabalho2 0106/include/inodehandler.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"t2fs.h"
+
+1527824740 /home/aluno/Trabalho2 0106/include/directory.h
+	<stdbool.h>
+	"t2fs.h"
+
+1527543168 /home/aluno/Trabalho2 0106/include/stringfunctions.h
+
+1527616886 source:/home/aluno/Trabalho2 0106/src/initializer.c
+	"../include/t2fs.h"
+	"../include/apidisk.h"
+	"../include/bitmap2.h"
+	"../include/initializer.h"
+	"../include/directory.h"
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1527820554 source:/home/aluno/Trabalho2 0106/src/inodehandler.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+	"../include/t2fs.h"
+	"../include/inodehandler.h"
+	"../include/blockhandler.h"
+
+1527545983 source:/home/aluno/Trabalho2 0106/src/stringfunctions.c
+	<string.h>
+
+1527825557 source:/home/aluno/Trabalho2 0106/src/t2fs.c
+	"../include/t2fs.h"
 	"../include/initializer.h"
 	<stdio.h>
 	<stdlib.h>
