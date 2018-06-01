@@ -13,12 +13,12 @@
 #include <stdbool.h>
 
 t_control* initializeLibrary() {
-    controller = (t_control*) malloc(sizeof(t_control));
-    rootDirectory =  malloc(sizeof(struct t2fs_record*));
-    currentDirectory = malloc(sizeof(struct t2fs_record*));
+    controller = malloc(sizeof(t_control));
+    rootDirectory =  malloc(sizeof(struct t2fs_record));
+    currentDirectory = malloc(sizeof(struct t2fs_record));
 
-    beingWorkedRecord = malloc(sizeof(struct t2fs_record*));
-    beingWorkedInode = malloc(sizeof(struct t2fs_inode*));
+    beingWorkedRecord = malloc(sizeof(struct t2fs_record));
+    beingWorkedInode = malloc(sizeof(struct t2fs_inode));
 
     bool errorCode;
 
@@ -33,41 +33,25 @@ t_control* initializeLibrary() {
         return NULL;
 
     initializeBeingWorkedBlock(controller);
-
     printDirectoryTree(0, 0);
-
     getInodeToBeingWorkedInode(0);
-
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
-    memcpy(rootDirectory,record, sizeof(record));
-    memcpy(currentDirectory,rootDirectory, sizeof(rootDirectory));
+    *rootDirectory = *record;
+    *currentDirectory = *record;
 
-    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
+//    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
+//    if(status)
+//        printf("found it!!!!!");
+//
+    bool status = absolutePathExists("/dir1/dir12/");
+//    bool status = relativePathExists("./dir1/dir12/", rootDirectory);
     if(status)
         printf("found it!!!!!");
 
     getInodeToBeingWorkedInode(5);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
-    //getcwd2()
-
-//
-//    printf("PRINTING INODE 0 \n");
-//    getInodeToBeingWorkedInode(0);
-//    printInodeContentFromBeingWorkedInode();
-//    printf("PRINTING INODE 1 \n");
-//    getInodeToBeingWorkedInode(1);
-//    printInodeContentFromBeingWorkedInode();
-//    printf("PRINTING INODE 4 \n");
-//    getInodeToBeingWorkedInode(4);
-//    printInodeContentFromBeingWorkedInode();
-
-    //readBlockToBeingWorkedBlock(3); // first inode
-
-
-
-    //printInodeContentFromBeingWorkedBlock(4);
     return controller;
 }
 

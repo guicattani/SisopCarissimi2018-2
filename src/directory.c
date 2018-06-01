@@ -134,9 +134,14 @@ bool relativePathExists(char* path, struct t2fs_record* directory) {
 
 bool absolutePathExists(char* path) {
     struct t2fs_record* record;
-    record = inodeDataPointerGetFirstRecord(rootDirectory->inodeNumber);
 
-    bool status = relativePathExists(path , record);
+    if(path[0] != '/')
+        return ERROR;
+
+    getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
+    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+
+    bool status = relativePathExists(&path[1] , record);
     return status;
 }
 
