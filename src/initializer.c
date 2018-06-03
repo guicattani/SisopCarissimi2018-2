@@ -49,8 +49,8 @@ t_control* initializeLibrary() {
     if(status)
         printf("found it!!!!!");
 
-    struct t2fs_record* status = findRecordOfPath("/dir1/dir12/");
-    if(status)
+    struct t2fs_record* status2 = findRecordOfPath("/dir1/dir12/");
+    if(status2)
         printf("found it!!!!!");
 
     status = relativePathExists("./dir1/dir12/", rootDirectory);

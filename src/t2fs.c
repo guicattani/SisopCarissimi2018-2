@@ -76,6 +76,25 @@ FILE2 create2 (char *filename) {
         return ERROR;
 
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //TESTES:
+    //checar se o ponteiro é nulo
+    //checar se arquivo já não existe no diretório
+
+    //criar novo openfile (estrutura t_openFile OLHAR HEADER!)
+    //inicializar essa nova estrutura (sugiro fazer um constr construtor se quiserem deixar mais legível)
+
+    //achar um lugar na memória em que esse arquivo caiba (TEM QUE DECIDIR QUAL A POLITICA QUE VAMOS USAR, pra facilitar pode ser first fit)
+    //pra isso tem que verificar o bitmap dos dados e atualizar ele também
+    //alocar a area de dados, se necessário fazer um ponteiro indireto ou duplamente indireto
+
+    //achar um lugar no bitmap de inodes também
+    //criar uma estrutura de inodes (de novo construtores) e alocar na area de memoria de inodes
+
+    //o retorno vocês tem que investigar o que é, porque eu não sei o que é esse dir_t, talvez seja DIRENT2 nesse trabalho, mas não entendi ainda
+
     return SUCCESS;
 }
 
@@ -94,6 +113,13 @@ int delete2 (char *filename) {
         return ERROR;
 
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //o oposto do create, ver acima
+
+    //também é preciso andar para o diretorio superior e deletar a entrada do arquivo
+
     return SUCCESS;
 }
 
@@ -117,6 +143,18 @@ FILE2 open2 (char *filename) {
         return ERROR;
 
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //TESTES
+    //verifica se arquivo existe no diretorio, vejam o diretory.c pra funções pra ajudar nisso
+    //checar se a estrutura de arquivos abertos openedFiles não está cheia, VER HEADER T2FS
+
+    //criar uma entrada para a estrutura que guarda quais arquivos estão abertos (openedFiles VER O HEADER T2FS)
+    //retorna o número dessa entrada (isso é um handle)
+
+    //cria uma nova entrada para a pra estrutura openedFiles VER HEADER
+
     return SUCCESS;
 }
 
@@ -135,6 +173,8 @@ int close2 (FILE2 handle) { //TODO CASOS DE TESTE
 
     if(!isFileHandleValid(handle))
         return ERROR;
+
+    /** TODO TESTAR! **/
 
     openedFiles[handle].valid = false;
 
@@ -162,6 +202,25 @@ int read2 (FILE2 handle, char *buffer, int size) {
     if(!isFileHandleValid(handle))
         return ERROR;
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //TESTES
+    //testar se o size não é maior que o arquivo
+
+    //achar o arquivo pelo inode, isso tem na estrutura do openedFiles
+    //verificar qual o tamanho do size, pra ver se está tudo nos ponteiros diretos (cada ponteiro direto aponta pra um bloco cheio de DWORDs)
+
+    //se não tem que ver como alocar pros ponteiros indiretos
+
+    //le pro buffer com read to working block e aí usa memcpy pro buffer
+
+    //atenção, lembrar que
+    //conforme escrito acima:
+    //*Após a leitura, o contador de posição (current pointer) deve ser ajustado para o byte seguinte ao último lido.*
+
+    //retorna SUCCESS (0) ou ERROR (-1)
+
     return SUCCESS;
 }
 
@@ -186,6 +245,11 @@ int write2 (FILE2 handle, char *buffer, int size) {
         return ERROR;
 
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //muito parecido com o read, ver acima
+
     return SUCCESS;
 }
 
@@ -201,40 +265,19 @@ Entra:	handle -> identificador do arquivo a ser truncado
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int truncate2 (FILE2 handle) { //cuidado que é inclusive
+int truncate2 (FILE2 handle) {
     if(checkInitialization())
         return ERROR;
 
     if(!isFileHandleValid(handle))
         return ERROR;
 
-//    if(openedFiles[handle].fileInode->blocksFileSize >= 0)
-//        return ERROR;
-//
-//    if(openedFiles[handle].fileInode->blocksFileSize == 1) {
-//        //cria bloco de 0s
-//        //copia inicio do bloco atual até o ponteiro
-//        //escreve bloco na memória
-//
-//        int range = openedFiles[handle].currentPointer;
-//
-//        //readBlockToBeingWorkedBlock(openedFiles[handle].fileInode);
-//
-//        printf("size of beingWorkedBlock %d", sizeof(beingWorkedBlock) );
-//
-//        char blockFilledWithZeroes[controller->boot.blockSize * SECTOR_SIZE];
-//        memset(blockFilledWithZeroes, 0, sizeof(blockFilledWithZeroes));
-//        memcpy(blockFilledWithZeroes, beingWorkedBlock, range);
-//
-//        memcpy(beingWorkedBlock, blockFilledWithZeroes, sizeof(beingWorkedBlock));
-//        //writeBeingWorkedBlock()
-//
-//
-//    }
-//    else
-//        return ERROR; //more than one block per file
+    //TODO implementação
 
-//TODO implementação
+    /** PRIMEIRO LER ACIMA **/
+
+    /**cuidado que é INCLUSIVE, então currentpointer é sobrescrito com 0**/
+    //corta os bytes sobresalentes
 
     return SUCCESS;
 }
@@ -259,6 +302,8 @@ int seek2 (FILE2 handle, DWORD offset) { //TODO CASOS DE TESTE
 
     if(!isFileHandleValid(handle) || offset < -1);
         return ERROR;
+
+    /** TODO TESTAR! **/
 
     if(offset >= 0)
         openedFiles[handle].currentPointer = offset;
@@ -285,6 +330,16 @@ int mkdir2 (char *pathname) {
     if(checkInitialization())
         return ERROR;
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //TESTES
+    //verificar se o caminho é valido ou se já existe diretorio com esse nome
+    //ver directory.c, lá tem as funções pra ajudar no teste
+
+    //muito parecido com create, ver acima
+    //mas nesse caso criamos um inode que tem records (entrada de diretorio), cada pointer do inode aponta pra um record
+
     return SUCCESS;
 }
 
@@ -309,6 +364,14 @@ int rmdir2 (char *pathname) {
         return ERROR;
 
     //TODO implementação
+
+    /** PRIMEIRO LER ACIMA **/
+
+    //muito parecido com o delete file,  ver acima
+    //mas precisa verificar se está vazio, conforme acima
+
+    //também é preciso andar para o diretorio superior(se houver) e deletar a entrada
+
     return SUCCESS;
 }
 
@@ -328,6 +391,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 int chdir2 (char *pathname) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
+
+    /** TODO TESTAR! **/
 
     struct t2fs_record* recordOfPath;
 
@@ -363,6 +428,8 @@ int getcwd2 (char *pathname, int size) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
 
+    /** TODO TESTAR! **/
+
     getPathToDirectory(currentDirectory, pathname, -1);
 
     return SUCCESS;
@@ -385,6 +452,8 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o identifi
 DIR2 opendir2 (char *pathname) { //TODO CASOS DE TESTE
     if(checkInitialization())
         return ERROR;
+
+    /** TODO TESTAR! **/
 
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(pathname);
@@ -440,7 +509,13 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
     if(!isDirectoryHandleValid(handle))
         return ERROR;
 
+    /** PRIMEIRO LER ACIMA **/
+
     //TODO implementação
+
+    //muito parecido com o readfile, ver acima
+    //mas tem que usar a estrutura dirent2 que tem no header t2fs.h
+
     return SUCCESS;
 }
 
@@ -459,6 +534,8 @@ int closedir2 (DIR2 handle) {//TODO CASOS DE TESTE
 
     if(!isDirectoryHandleValid(handle))
         return ERROR;
+
+    /** TODO TESTAR! **/
 
     openedDirectories[handle].valid = false;
 
