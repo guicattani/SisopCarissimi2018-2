@@ -2,6 +2,7 @@
 #include "../include/initializer.h"
 #include "../include/directory.h"
 #include "../include/inodehandler.h"
+#include "../include/blockhandler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ Função: Criar um novo arquivo.
 	O contador de posição do arquivo (current pointer) deve ser colocado na posição zero.
 	Caso já exista um arquivo ou diretório com o mesmo nome, a função deverá retornar um erro de criação.
 	A função deve retornar o identificador (handle) do arquivo.
-	DIR_tEsse handle será usado em chamadas posteriores do sistema de arquivo para fins de manipulação do arquivo criado.
+	Esse handle será usado em chamadas posteriores do sistema de arquivo para fins de manipulação do arquivo criado.
 
 Entra:	filename -> nome do arquivo a ser criado.
 
@@ -75,27 +76,68 @@ FILE2 create2 (char *filename) {
     if(checkInitialization())
         return ERROR;
 
-    //TODO implementação
+    if(filename == NULL)
+        return ERROR;
 
-    /** PRIMEIRO LER ACIMA **/
+    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
-    //TESTES:
-    //checar se o ponteiro é nulo
-    //checar se arquivo já não existe no diretório
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
 
-    //criar novo openfile (estrutura t_openFile OLHAR HEADER!)
-    //inicializar essa nova estrutura (sugiro fazer um constr construtor se quiserem deixar mais legível)
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
 
-    //achar um lugar na memória em que esse arquivo caiba (TEM QUE DECIDIR QUAL A POLITICA QUE VAMOS USAR, pra facilitar pode ser first fit)
-    //pra isso tem que verificar o bitmap dos dados e atualizar ele também
-    //alocar a area de dados, se necessário fazer um ponteiro indireto ou duplamente indireto
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(strcmp(records[index].name, filename))
+            return ERROR;
+    }
+    int vacantBlock = searchBitmap2(controller->freeBlockBitmap, 0);
 
-    //achar um lugar no bitmap de inodes também
-    //criar uma estrutura de inodes (de novo construtores) e alocar na area de memoria de inodes
+    unsigned char block[1024];
+    memset(block, 0, sizeof(block));
+    //writeBlockToBlockDataSector(block, vacantBlock);
 
-    //o retorno vocês tem que investigar o que é, porque eu não sei o que é esse dir_t, talvez seja DIRENT2 nesse trabalho, mas não entendi ainda
+    int vacantInode = searchBitmap2(controller->freeInodeBitmap, 0);
 
-    return SUCCESS;
+    struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
+    newInode->blocksFileSize = 1;
+    newInode->bytesFileSize = 1;
+    newInode->dataPtr[0] = vacantBlock + dataSectionInBlocks;
+    newInode->dataPtr[1] = 0;
+    newInode->singleIndPtr = 0;
+    newInode->doubleIndPtr = 0;
+    newInode->reservado[0] = 0;
+    newInode->reservado[1] = 0;
+
+    memset(block, 0, sizeof(block));
+    memcpy(block, newInode, sizeof(newInode));
+    //writeBlockToBlockDataSector(block, vacantInode);
+
+    setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
+    setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
+
+    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
+    newRecord->TypeVal = 1;
+    strcpy(newRecord->name,filename);
+    newRecord->inodeNumber = vacantInode;
+
+    bool errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
+    if(errorCode) {
+        free(newInode);
+        free(newRecord);
+        return -1;
+    }
+
+    int fileHandle = open2(filename);
+    if(fileHandle == -1)
+        return ERROR;
+
+    free(newInode);
+    free(newRecord);
+    return fileHandle;
 }
 
 
@@ -112,13 +154,39 @@ int delete2 (char *filename) {
     if(checkInitialization())
         return ERROR;
 
-    //TODO implementação
+    if(filename == NULL)
+        return ERROR;
 
-    /** PRIMEIRO LER ACIMA **/
+    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
-    //o oposto do create, ver acima
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
 
-    //também é preciso andar para o diretorio superior e deletar a entrada do arquivo
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(strcmp(records[index].name, filename))
+            break;
+    }
+
+    if(index == 16)
+        return ERROR;
+
+    getInodeToBeingWorkedInode(records[index].inodeNumber);
+
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
+
+    setBitmap2(controller->freeBlockBitmap, beingWorkedInode->dataPtr[0], 0);
+    setBitmap2(controller->freeInodeBitmap, records[index].inodeNumber, 0);
+
+    memset(&records[index], 0, sizeof(struct t2fs_record));
 
     return SUCCESS;
 }

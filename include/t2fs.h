@@ -113,6 +113,11 @@ struct t2fs_record* beingWorkedRecord;
 
 t_control* controller;
 
+int inodesStartBlock;
+int blocksStartBlock;
+int inodesSectionInBlocks;
+int dataSectionInBlocks;
+
 /*-----------------------------------------------------------------------------
 Função: Usada para identificar os desenvolvedores do T2FS.
 	Essa função copia um string de identificação para o ponteiro indicado por "name".

@@ -26,4 +26,5 @@ bool bootFileSystemController();
 bool fillBitmaps();
 bool initializeOpenedDirectories();
 bool initializeOpenedFiles();
+bool initializeGlobalVariables();
 #endif

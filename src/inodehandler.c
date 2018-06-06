@@ -90,3 +90,20 @@ struct t2fs_record* inodeDataPointerGetFirstRecord(DWORD dataPtr) {
 
     return record;
 }
+
+bool inodeAppendRecord(DWORD dataPtr, struct t2fs_record* newRecord) {
+    readBlockToAuxiliaryWorkingBlock(dataPtr);
+
+    int recordSize = sizeof(struct t2fs_record);
+    unsigned char buffer[recordSize];
+
+    int index;
+    for(index = 0; index < 16; index++) { //1024(blockSize) divides by 64 (recordSize)
+        memcpy(buffer, &auxiliaryWorkingBlock[index*recordSize], recordSize);
+        if(buffer[0] == '\0') {
+            memcpy(&auxiliaryWorkingBlock[index*recordSize], newRecord, recordSize);
+            return SUCCESS;
+        }
+    }
+    return ERROR;
+}

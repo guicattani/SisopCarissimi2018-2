@@ -21,4 +21,6 @@ struct t2fs_record* inodeDataPointerToRecords(DWORD dataPtr);
 
 struct t2fs_record* inodeDataPointerGetFirstRecord(DWORD dataPtr);
 
+bool inodeAppendRecord(DWORD dataPtr, struct t2fs_record* newRecord);
+
 #endif

@@ -25,27 +25,6 @@ int blocksStartBlock;
 
 //TODO documentação
 
-bool initializeBeingWorkedBlock(t_control* controller){
-    blockSize                     = controller->boot.blockSize;
-
-    freeBlocksBitmapSizeInSectors = controller->boot.freeBlocksBitmapSize * blockSize;
-    freeInodesBitmapSizeInSectors = controller->boot.freeInodeBitmapSize * blockSize;
-    inodesAreaSizeInSectors       = controller->boot.inodeAreaSize * blockSize;
-    diskSizeInSectors             = controller->boot.diskSize * blockSize;
-    blocksAreaSizeInSectors       = diskSizeInSectors
-                                    - controller->boot.superblockSize* blockSize
-                                    - freeBlocksBitmapSizeInSectors
-                                    - freeInodesBitmapSizeInSectors
-                                    - inodesAreaSizeInSectors;
-
-    inodesStartSector = blockSize + freeBlocksBitmapSizeInSectors + freeInodesBitmapSizeInSectors;
-    inodesStartBlock  = inodesStartSector / blockSize;
-    blocksStartSector = inodesStartSector + inodesAreaSizeInSectors;
-    blocksStartBlock  = blocksStartSector / blockSize;
-
-    return SUCCESS;
-}
-
 bool readBlockToBeingWorkedBlock(int blockIndex) {
     unsigned char buffer[SECTOR_SIZE];
     memset(buffer, 0, sizeof(buffer));
@@ -71,13 +50,26 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     return SUCCESS;
 }
 
-bool writeBeingWorkedBlock(int blockIndex) {
+bool writeBeingWorkedBlockToInodesSector(int blockToBeWrittenIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
         memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
 
-        if(write_sector(blockIndex*blockSize + index, buffer) != 0 )
+        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 )
+            return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+bool writeBeingWorkedBlockToDataSector(int blockToBeWrittenIndex) {
+    unsigned char buffer[SECTOR_SIZE];
+    int index;
+    for(index = 0; index < 4; index++) {
+        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
+
+        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 )
             return ERROR;
     }
 

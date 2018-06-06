@@ -37,7 +37,6 @@ t_control* initializeLibrary() {
     if(errorCode == ERROR)
         return NULL;
 
-    initializeBeingWorkedBlock(controller);
     printDirectoryTree(0, 0);
     getInodeToBeingWorkedInode(0);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
@@ -156,3 +155,29 @@ bool initializeOpenedFiles() {
     }
     return SUCCESS;
 }
+
+
+bool initializeGlobalVariables(){
+    int blockSize                     = controller->boot.blockSize;
+
+    int freeBlocksBitmapSizeInSectors = controller->boot.freeBlocksBitmapSize * blockSize;
+    int freeInodesBitmapSizeInSectors = controller->boot.freeInodeBitmapSize * blockSize;
+    int inodesAreaSizeInSectors       = controller->boot.inodeAreaSize * blockSize;
+//    int diskSizeInSectors             = controller->boot.diskSize * blockSize;
+//    int blocksAreaSizeInSectors       = diskSizeInSectors
+//                                    - controller->boot.superblockSize* blockSize
+//                                    - freeBlocksBitmapSizeInSectors
+//                                    - freeInodesBitmapSizeInSectors
+//                                    - inodesAreaSizeInSectors;
+
+    int inodesStartSector = blockSize + freeBlocksBitmapSizeInSectors + freeInodesBitmapSizeInSectors;
+    inodesStartBlock  = inodesStartSector / blockSize;
+    int blocksStartSector = inodesStartSector + inodesAreaSizeInSectors;
+    blocksStartBlock  = blocksStartSector / blockSize;
+
+    inodesSectionInBlocks  = blocksStartBlock - inodesStartBlock;
+    dataSectionInBlocks  = controller->boot.diskSize -blocksStartBlock;
+
+    return SUCCESS;
+}
+
