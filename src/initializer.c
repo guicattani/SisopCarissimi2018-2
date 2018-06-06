@@ -22,13 +22,9 @@ t_control* initializeLibrary() {
     beingWorkedRecord = malloc(sizeof(struct t2fs_record));
     beingWorkedInode = malloc(sizeof(struct t2fs_inode));
 
-    initializeOpenedDirectories();
-    initializeOpenedFiles();
-
-    bool errorCode;
-
     struct t2fs_record* record;
 
+    bool errorCode;
     errorCode = bootFileSystemController();
     if(errorCode == ERROR)
         return NULL;
@@ -37,6 +33,10 @@ t_control* initializeLibrary() {
     if(errorCode == ERROR)
         return NULL;
 
+    initializeOpenedDirectories();
+    initializeOpenedFiles();
+    initializeGlobalVariables();
+
     printDirectoryTree(0, 0);
     getInodeToBeingWorkedInode(0);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
@@ -44,17 +44,22 @@ t_control* initializeLibrary() {
     *rootDirectory = *record;
     *currentDirectory = *record;
 
-    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
-    if(status)
+//    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
+//    if(status)
+//        printf("found it!!!!!");
+
+    struct t2fs_record* recordTest = findRecordOfPath("/dir1/dir12/");
+    if(recordTest)
         printf("found it!!!!!");
 
-    struct t2fs_record* status2 = findRecordOfPath("/dir1/dir12/");
-    if(status2)
+    recordTest = findRecordOfPath("../dir1/dir12/");
+    if(recordTest)
         printf("found it!!!!!");
 
-    status = relativePathExists("./dir1/dir12/", rootDirectory);
-    if(status)
+    recordTest = findRecordOfPath("./dir1/dir12/");
+    if(recordTest)
         printf("found it!!!!!");
+
 
     getInodeToBeingWorkedInode(5);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
@@ -158,7 +163,7 @@ bool initializeOpenedFiles() {
 
 
 bool initializeGlobalVariables(){
-    int blockSize                     = controller->boot.blockSize;
+    int blockSize                         = controller->boot.blockSize;
 
     int freeBlocksBitmapSizeInSectors = controller->boot.freeBlocksBitmapSize * blockSize;
     int freeInodesBitmapSizeInSectors = controller->boot.freeInodeBitmapSize * blockSize;

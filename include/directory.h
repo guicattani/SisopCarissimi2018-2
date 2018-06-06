@@ -7,6 +7,8 @@
 #define ERROR -1
 #define SUCCESS 0
 
+#define MAX_PATH_LENGTH 59
+
 void printDirectoryTree();
 
 void printerOfTree(int level, int inodeNumber) ;
@@ -19,5 +21,9 @@ struct t2fs_record* findRecordOfPath();
 
 //upperDirectoryInode should be first used with -1
 void getPathToDirectory(struct t2fs_record* directory, char* completePath, int upperDirectoryInode);
+
+struct t2fs_record* returnRecordOfParentDirectory(char* fullAbsolutePath);
+
+void assureThatPathIsAbsolute(char* path, char* completePath);
 
 #endif

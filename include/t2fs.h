@@ -23,6 +23,7 @@
 #include "../include/apidisk.h"
 #include "../include/bitmap2.h"
 
+
 typedef int FILE2;
 typedef int DIR2;
 
@@ -369,4 +370,5 @@ bool isFileHandleValid(FILE2 handle);
 bool isDirectoryHandleValid(DIR2 handle);
 
 bool checkInitialization();
+
 #endif

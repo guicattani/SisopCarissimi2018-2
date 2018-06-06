@@ -10,8 +10,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-int blockSize;
-
 int freeBlocksBitmapSizeInSectors;
 int freeInodesBitmapSizeInSectors;
 int inodesAreaSizeInSectors;
@@ -31,7 +29,7 @@ bool readBlockToBeingWorkedBlock(int blockIndex) {
 
     int index;
     for(index = 0; index < 4; index++) {
-       if(read_sector(blockIndex*blockSize + index, buffer) != 0 )
+       if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 )
             return ERROR;
         memcpy(&beingWorkedBlock[index*SECTOR_SIZE], &buffer, sizeof(buffer));
     }
@@ -42,7 +40,7 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
-        if(read_sector(blockIndex*blockSize + index, buffer) != 0 )
+        if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 )
             return ERROR;
         memcpy(&auxiliaryWorkingBlock[index*SECTOR_SIZE], &buffer, sizeof(buffer));
     }
@@ -50,11 +48,38 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     return SUCCESS;
 }
 
-bool writeBeingWorkedBlockToInodesSector(int blockToBeWrittenIndex) {
+//bool writeBeingWorkedBlockToInodesSection(int blockToBeWrittenIndex) {
+//    unsigned char buffer[SECTOR_SIZE];
+//    int index;
+//    for(index = 0; index < 4; index++) {
+//        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
+//
+//        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 )
+//            return ERROR;
+//    }
+//
+//    return SUCCESS;
+//}
+//
+//bool writeBeingWorkedBlockToDataSection(int blockToBeWrittenIndex) {
+//    unsigned char buffer[SECTOR_SIZE];
+//    int index;
+//    for(index = 0; index < 4; index++) {
+//        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
+//
+//        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 )
+//            return ERROR;
+//    }
+//
+//    return SUCCESS;
+//}
+
+
+bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
-        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
+        memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
         if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 )
             return ERROR;
@@ -63,11 +88,11 @@ bool writeBeingWorkedBlockToInodesSector(int blockToBeWrittenIndex) {
     return SUCCESS;
 }
 
-bool writeBeingWorkedBlockToDataSector(int blockToBeWrittenIndex) {
+bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
-        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
+        memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
         if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 )
             return ERROR;

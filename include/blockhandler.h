@@ -14,9 +14,10 @@ unsigned char auxiliaryWorkingBlock[1024];
 
 bool readBlockToBeingWorkedBlock(int blockIndex);
 bool readBlockToAuxiliaryWorkingBlock(int blockIndex);
-bool writeBeingWorkedBlockToInodesSector(int blockIndex);
-bool writeBeingWorkedBlockToDataSector(int blockIndex);
+//bool writeBeingWorkedBlockToInodesSection(int blockIndex);
+//bool writeBeingWorkedBlockToDataSection(int blockIndex);
 
-bool writeBlockToBlockDataSector(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
 
 #endif

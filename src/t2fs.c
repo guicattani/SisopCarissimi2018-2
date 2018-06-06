@@ -3,6 +3,7 @@
 #include "../include/directory.h"
 #include "../include/inodehandler.h"
 #include "../include/blockhandler.h"
+#include "../include/stringfunctions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,7 +99,7 @@ FILE2 create2 (char *filename) {
 
     unsigned char block[1024];
     memset(block, 0, sizeof(block));
-    //writeBlockToBlockDataSector(block, vacantBlock);
+    writeBlockToBlockDataSection(block, vacantBlock);
 
     int vacantInode = searchBitmap2(controller->freeInodeBitmap, 0);
 
@@ -114,7 +115,7 @@ FILE2 create2 (char *filename) {
 
     memset(block, 0, sizeof(block));
     memcpy(block, newInode, sizeof(newInode));
-    //writeBlockToBlockDataSector(block, vacantInode);
+    writeBlockToInodeDataSection(block, vacantInode);
 
     setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
     setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
@@ -128,7 +129,7 @@ FILE2 create2 (char *filename) {
     if(errorCode) {
         free(newInode);
         free(newRecord);
-        return -1;
+        return ERROR;
     }
 
     int fileHandle = open2(filename);
@@ -401,6 +402,77 @@ int mkdir2 (char *pathname) {
 
     /** PRIMEIRO LER ACIMA **/
 
+    struct t2fs_record* recordOfParentDirectory;
+    recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
+
+    if(recordOfParentDirectory == NULL)
+        return ERROR;
+
+    getInodeToBeingWorkedInode(recordOfParentDirectory->inodeNumber);
+
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
+
+    char newDirectoryName[59];
+
+    char* position = rstrstr(pathname, "/");
+    if(position == NULL && recordOfParentDirectory->inodeNumber != 0)
+        return ERROR;
+
+    subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
+
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(strcmp(records[index].name, newDirectoryName))
+            return ERROR;
+    }
+    int vacantBlock = searchBitmap2(controller->freeBlockBitmap, 0);
+
+    unsigned char block[1024];
+    memset(block, 0, sizeof(block));
+    writeBlockToBlockDataSection(block, vacantBlock);
+
+    int vacantInode = searchBitmap2(controller->freeInodeBitmap, 0);
+
+    struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
+    newInode->blocksFileSize = 1;
+    newInode->bytesFileSize = 1;
+    newInode->dataPtr[0] = vacantBlock + dataSectionInBlocks;
+    newInode->dataPtr[1] = 0;
+    newInode->singleIndPtr = 0;
+    newInode->doubleIndPtr = 0;
+    newInode->reservado[0] = 0;
+    newInode->reservado[1] = 0;
+
+    memset(block, 0, sizeof(block));
+    memcpy(block, newInode, sizeof(newInode));
+    writeBlockToInodeDataSection(block, vacantInode);
+
+    setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
+    setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
+
+    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
+    newRecord->TypeVal = 2;
+    strcpy(newRecord->name,newDirectoryName);
+    newRecord->inodeNumber = vacantInode;
+
+    bool errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
+    if(errorCode) {
+        free(newInode);
+        free(newRecord);
+        return ERROR;
+    }
+
+    //CRIAR O . E O .. para o novo diretorio TODO
+
+    free(newInode);
+    free(newRecord);
+
     //TESTES
     //verificar se o caminho é valido ou se já existe diretorio com esse nome
     //ver directory.c, lá tem as funções pra ajudar no teste
@@ -434,6 +506,23 @@ int rmdir2 (char *pathname) {
     //TODO implementação
 
     /** PRIMEIRO LER ACIMA **/
+
+    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
+
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(strcmp(records[index].name, pathname))
+            return ERROR;
+    }
+
 
     //muito parecido com o delete file,  ver acima
     //mas precisa verificar se está vazio, conforme acima
