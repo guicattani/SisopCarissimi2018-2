@@ -60,6 +60,8 @@ t_control* initializeLibrary() {
     if(recordTest)
         printf("found it!!!!!");
 
+    currentDirectory* = recordTest*
+
 
     getInodeToBeingWorkedInode(5);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
@@ -69,7 +71,6 @@ t_control* initializeLibrary() {
 
 bool bootFileSystemController()
 {
-
     unsigned char buffer[256];
     int index = 0;
 

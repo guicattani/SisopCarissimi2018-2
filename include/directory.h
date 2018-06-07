@@ -17,13 +17,13 @@ void printSubDirectories(int level, DWORD dataPointer);
 
 struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory);
 
+struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory);
+
 struct t2fs_record* findRecordOfPath();
 
 //upperDirectoryInode should be first used with -1
 void getPathToDirectory(struct t2fs_record* directory, char* completePath, int upperDirectoryInode);
 
 struct t2fs_record* returnRecordOfParentDirectory(char* fullAbsolutePath);
-
-void assureThatPathIsAbsolute(char* path, char* completePath);
 
 #endif
