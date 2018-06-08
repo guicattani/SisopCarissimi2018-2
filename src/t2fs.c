@@ -696,18 +696,15 @@ int chdir2 (char *pathname) {
         fprintf(stderr, "!ERROR! // chdir2 // failed initializing\n");
         return ERROR;
     }
-
-    /** TODO TESTAR! **/
+    if(!strcmp(pathname, "./") || !strcmp(pathname, ".") )
+        return SUCCESS;
 
     struct t2fs_record* recordOfPath;
 
     recordOfPath = findRecordOfPath(pathname);
 
-    if(recordOfPath && (pathname[0] == '.' && (pathname[1] == '.' || pathname[1] == '/' )) )
-        recordOfPath = relativePathExists(pathname, recordOfPath, TYPEVAL_DIRETORIO);
-
     if(recordOfPath == NULL) {
-        fprintf(stderr, "!ERROR! // chdir2 // path not found\n");
+        fprintf(stderr, "!ERROR! // chdir2 // path '%s' not found\n", pathname);
         return ERROR;
     }
 
@@ -736,8 +733,6 @@ int getcwd2 (char *pathname, int size) {
         fprintf(stderr, "!ERROR! // getcwd2 // failed initializing\n");
         return ERROR;
     }
-
-    /** TODO TESTAR! **/
 
     getPathToDirectory(currentDirectory, pathname, -1);
 
@@ -918,4 +913,10 @@ bool checkInitialization() {
     }
 
     return SUCCESS;
+}
+
+void printCurrentWorkingDirectory() {
+    char pathname[MAX_PATH_LENGTH];
+    getcwd2(pathname, sizeof(pathname));
+    printf("current working directory: %s\n", pathname);
 }

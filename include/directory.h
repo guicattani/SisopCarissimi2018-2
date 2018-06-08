@@ -30,4 +30,6 @@ struct t2fs_record* returnRecordOfParentDirectory(char* path);
 
 bool getNameOfDirectoryAtEndOfPath(char* path, char* name);
 
+void getNameOfFileByInode(int inodeNumber, char* name);
+
 #endif

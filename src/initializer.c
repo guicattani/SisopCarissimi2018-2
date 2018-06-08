@@ -50,22 +50,24 @@ t_control* initializeLibrary() {
 
     struct t2fs_record* recordTest = findRecordOfPath("/dir1/dir12/");
     if(recordTest)
-        printf("found it!!!!!");
+        printf("found it!!!!!\n");
 
     recordTest = findRecordOfPath("../dir1/dir12/");
     if(recordTest)
-        printf("found it!!!!!");
+        printf("found it!!!!!\n");
 
     recordTest = findRecordOfPath("./dir1/dir12/");
     if(recordTest)
-        printf("found it!!!!!");
+        printf("found it!!!!!\n");
 
-    if(recordTest != NULL)
-        *currentDirectory = *recordTest;
+//    if(recordTest != NULL)
+//        *currentDirectory = *recordTest;
+
+    *currentDirectory = *recordTest;
 
     recordTest = findRecordOfPath("../dir11");
     if(recordTest)
-        printf("found it!!!!!");
+        printf("found it!!!!!\n");
 
 
     getInodeToBeingWorkedInode(5);

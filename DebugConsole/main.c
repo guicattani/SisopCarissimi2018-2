@@ -13,9 +13,18 @@ int main()
         return -1;
     }
 
-    char path[59];
-    getcwd2(path,sizeof(path));
-    printf("cwd:\n%s\n", path);
+    printCurrentWorkingDirectory();
+    chdir2("./");
+    printCurrentWorkingDirectory();
+    chdir2("../");
+    printCurrentWorkingDirectory();
+
+    chdir2("dir11/"); //AMEM
+    printCurrentWorkingDirectory();
+
+
+
+
     printf("Nome do grupo:\n%s\n", groupName);
 
     return 0;

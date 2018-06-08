@@ -127,7 +127,7 @@ struct t2fs_record* findRecordOfPath(char* path) {
     struct t2fs_record* record;
 
     struct t2fs_record* returnRecord;
-    if(path[0] == '/' || path[0] != '.') {
+    if(path[0] == '/') {
         getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
         record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
         returnRecord = absolutePathExists(&path[1] , record, TYPEVAL_DIRETORIO);
@@ -138,8 +138,28 @@ struct t2fs_record* findRecordOfPath(char* path) {
         returnRecord = relativePathExists(&path[0] , record, TYPEVAL_DIRETORIO);
     }
 
-    if(returnRecord->TypeVal != TYPEVAL_DIRETORIO)
+    if(returnRecord == NULL) {
+        fprintf(stderr, "!ERROR! // findRecordOfPath // path not found\n");
         return NULL;
+    }
+
+    if(returnRecord->TypeVal != TYPEVAL_DIRETORIO) {
+        fprintf(stderr, "!ERROR! // findRecordOfPath // record is not a directory\n");
+        return NULL;
+    }
+
+    if( (!strcmp(returnRecord->name, ".") || !strcmp(returnRecord->name, "..") ) && returnRecord->inodeNumber != 0) {
+        char name[MAX_FILE_NAME_SIZE];
+        struct t2fs_record auxiliaryRecord;
+        auxiliaryRecord = *returnRecord;
+
+        int numberOfInode = (int) auxiliaryRecord.inodeNumber;
+        getNameOfFileByInode(numberOfInode, name);
+        strncpy(auxiliaryRecord.name, name, strlen(name)+1);
+
+        //workaround, strcpy is messing with the struct for some reason
+        returnRecord = &auxiliaryRecord;
+    }
 
     return returnRecord;
 }
@@ -162,8 +182,15 @@ struct t2fs_record* findRecordOfFile(char* path) {
         returnRecord = relativePathExists(&path[0] , record, TYPEVAL_REGULAR);
     }
 
-    if(returnRecord->TypeVal != TYPEVAL_REGULAR)
+    if(returnRecord == NULL) {
+        fprintf(stderr, "!ERROR! // findRecordOfPath // path not found\n");
         return NULL;
+    }
+
+    if(returnRecord->TypeVal != TYPEVAL_REGULAR) {
+        fprintf(stderr, "!ERROR! // findRecordOfPath // record is not a file\n");
+        return NULL;
+    }
 
     return returnRecord;
 }
@@ -194,16 +221,18 @@ void getPathToDirectory(struct t2fs_record* directory, char* completePath, int u
     for(index = 0; index < 16; index++) {
         if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR
         && upperDirectoryInode == records[index].inodeNumber) {
-            strncpy(completePath + strlen(completePath), records[index].name, strlen(records[index].name));
-                break;
+            strncpy(completePath + strlen(completePath), records[index].name, strlen(records[index].name)+1);
+            break;
         }
     }
 
     if(strlen(completePath) != 1) {
-        completePath[strlen(completePath)] = '/';
-        completePath[strlen(completePath)+1] = '\0';
+        int completePathLength = strlen(completePath);
+        completePath[completePathLength] = '/';
+        completePath[completePathLength+1] = '\0';
     }
 
+    return;
 }
 
 struct t2fs_record* returnRecordOfParentDirectory(char* path) {
@@ -241,7 +270,7 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
     if(directory->TypeVal != TYPEVAL_DIRETORIO || directory == NULL)
         return NULL;
 
-    if(!strcmp(path, ".") || !strcmp(path, "..") || !strcmp(path, "./") || !strcmp(path, "../") || !strcmp(path, "/") || strlen(path) == 0)
+    if(!strcmp(path, ".") || !strcmp(path, "..") || !strcmp(path, "./") || !strcmp(path, "/") || strlen(path) == 0)
         return directory;
 
     int index;
@@ -290,12 +319,11 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
         records = inodeDataPointerToRecords(firstAdress);
         for(index = 0; index < 16; index++) {
             if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
-                    if(!strcmp(dirBeingLookedFor, records[index].name)) {
-                        return &records[index];
-                    }
+                if(!strcmp(dirBeingLookedFor, records[index].name)) {
+                    return &records[index];
+                }
             }
         }
-
     }
 
     records = inodeDataPointerToRecords(firstAdress);
@@ -308,4 +336,25 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
         }
     }
     return recordOfPath;
+}
+
+void getNameOfFileByInode(int inodeNumber, char* name) {
+    if(inodeNumber <= 0)
+        return;
+
+    getInodeToBeingWorkedInode(inodeNumber);
+    struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    getInodeToBeingWorkedInode(records[1].inodeNumber);
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    int index;
+    for(index = 0; index < 16; index++) {
+        if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
+            if(inodeNumber == records[index].inodeNumber) {
+                strncpy(name, records[index].name, strlen(records[index].name)+1);
+                return;
+            }
+        }
+    }
 }
