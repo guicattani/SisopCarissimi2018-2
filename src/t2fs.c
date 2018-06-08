@@ -778,12 +778,15 @@ DIR2 opendir2 (char *pathname) {
                 return ERROR;
             }
         }
-        else if(emptySpace == -1 && index <= 16)
+        else if(emptySpace == -1) {
             emptySpace = index;
-        else {
-            fprintf(stderr, "!ERROR! // opendir2 // no empty space in opened directories\n");
-            return ERROR;
+            break;
         }
+    }
+
+    if(index >= 16) {
+        fprintf(stderr, "!ERROR! // opendir2 // no empty space in opened directories\n");
+        return ERROR;
     }
 
     struct openDirectory* newOpenedDirectory = malloc(sizeof(struct openDirectory));
@@ -792,6 +795,7 @@ DIR2 opendir2 (char *pathname) {
 
     newOpenedDirectory->valid = true;
     newOpenedDirectory->bytesFileSize = beingWorkedInode->bytesFileSize;
+    newOpenedDirectory->directoryRecord = malloc(sizeof(struct t2fs_record));
     *newOpenedDirectory->directoryRecord = *recordOfPath;
 
     openedDirectories[emptySpace] = *newOpenedDirectory;
@@ -858,9 +862,18 @@ int closedir2 (DIR2 handle) {//TODO CASOS DE TESTE
         return ERROR;
     }
 
-    /** TODO TESTAR! **/
+    if(!openedDirectories[handle].valid) {
+        fprintf(stderr, "!ERROR! // closedir2 // handle is marked as invalid\n");
+        return ERROR;
+    }
+
+    if(openedDirectories[handle].directoryRecord == NULL) {
+        fprintf(stderr, "!ERROR! // closedir2 // directory record is not a pointer\n");
+        return ERROR;
+    }
 
     openedDirectories[handle].valid = false;
+    free(openedDirectories[handle].directoryRecord);
 
     return SUCCESS;
 }

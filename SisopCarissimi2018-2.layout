@@ -2,18 +2,21 @@
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
 	<File name="src/blockhandler.c" open="1" top="0" tabpos="4">
-		<Cursor position="3073" topLine="76" />
+		<Cursor position="417" topLine="72" />
 	</File>
-	<File name="src/directory.c" open="1" top="0" tabpos="5">
-		<Cursor position="317" topLine="0" />
+	<File name="src/directory.c" open="1" top="1" tabpos="5">
+		<Cursor position="6802" topLine="200" />
 	</File>
 	<File name="src/initializer.c" open="1" top="0" tabpos="6">
-		<Cursor position="4122" topLine="112" />
+		<Cursor position="1703" topLine="43" />
 	</File>
 	<File name="src/inodehandler.c" open="1" top="0" tabpos="7">
-		<Cursor position="717" topLine="0" />
+		<Cursor position="3449" topLine="76" />
 	</File>
-	<File name="src/t2fs.c" open="1" top="1" tabpos="8">
-		<Cursor position="4213" topLine="87" />
+	<File name="src/stringfunctions.c" open="1" top="0" tabpos="13">
+		<Cursor position="342" topLine="0" />
+	</File>
+	<File name="src/t2fs.c" open="1" top="0" tabpos="8">
+		<Cursor position="4132" topLine="116" />
 	</File>
 </CodeBlocks_layout_file>

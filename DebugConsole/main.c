@@ -19,9 +19,16 @@ int main()
     chdir2("../");
     printCurrentWorkingDirectory();
 
-    chdir2("dir11/"); //AMEM
+    chdir2("dir11/");
     printCurrentWorkingDirectory();
 
+    chdir2("/");
+    printCurrentWorkingDirectory();
+
+    opendir2("./dir1");
+    closedir2(0);
+    opendir2("./dir1");
+    closedir2(0);
 
 
 
