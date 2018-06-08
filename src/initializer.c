@@ -80,7 +80,7 @@ bool bootFileSystemController()
     int index = 0;
 
     if(read_sector(0, buffer) != 0) {
-        fprintf(stderr, "Falha ao ler setor do disco.\n");
+        fprintf(stderr, "!ERROR! // bootFileSystemController // failed reading sector 0\n");
         return ERROR;
     }
 
@@ -115,12 +115,12 @@ bool bootFileSystemController()
            controller->boot.diskSize);
 
     if(controller->boot.version != 32289) {
-        fprintf(stderr, "File system version is outdated.\n");
+        fprintf(stderr, "!ERROR! // bootFileSystemController // file system is outdated\n");
         return ERROR;
     }
 
     if(controller->boot.id[0] != 'T' || controller->boot.id[1] != '2' || controller->boot.id[2] != 'F' || controller->boot.id[3] != 'S') {
-        fprintf(stderr, "File system id is invalid.\n");
+        fprintf(stderr, "!ERROR! // bootFileSystemController // file system id is invalid\n");
         return ERROR;
     }
 
@@ -130,19 +130,22 @@ bool bootFileSystemController()
 bool fillBitmaps() {
 
     if(controller == NULL)
+    {
+        fprintf(stderr, "!ERROR! // fillBitmaps // controller NULL\n");
         return ERROR;
+    }
 
     unsigned char buffer[SECTOR_SIZE];
 
     if(read_sector(1, buffer) != 0) {
-        fprintf(stderr, "Falha ao ler setor do disco.\n");
+        fprintf(stderr, "!ERROR! // fillBitmaps // error reading sector 1\n");
         return ERROR;
     }
 
     controller->freeBlockBitmap = (int) buffer;
 
     if(read_sector(1, buffer) != 0) {
-        fprintf(stderr, "Falha ao ler setor do disco.\n");
+        fprintf(stderr, "!ERROR! // fillBitmaps // error reading sector 1\n");
         return ERROR;
     }
 

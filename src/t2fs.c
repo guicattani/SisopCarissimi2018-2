@@ -254,6 +254,8 @@ FILE2 open2 (char *filename) {
 
     openedFiles[emptySpace] = *newOpenedFile;
 
+    free(newOpenedFile);
+
     return emptySpace;
 
     //TESTES
@@ -390,10 +392,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 -----------------------------------------------------------------------------*/
 int truncate2 (FILE2 handle) {
     if(checkInitialization())
+    {
+        fprintf(stderr, "!ERROR! // truncate2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isFileHandleValid(handle))
+    if(!isFileHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // truncate2 // file handle is invalid\n");
         return ERROR;
+    }
 
     //TODO implementação
 
@@ -401,6 +408,9 @@ int truncate2 (FILE2 handle) {
 
     /**cuidado que é INCLUSIVE, então currentpointer é sobrescrito com 0**/
     //corta os bytes sobresalentes
+
+    if(openedFiles[handle].fileInode->blocksFileSize > 1)
+        return ERROR;
 
     return SUCCESS;
 }
@@ -420,11 +430,16 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int seek2 (FILE2 handle, DWORD offset) { //TODO CASOS DE TESTE
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // seek2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isFileHandleValid(handle) || offset < -1);
+    if(!isFileHandleValid(handle) || offset < -1)
+    {
+        fprintf(stderr, "!ERROR! // seek2 // file handle invalid or offset invalid\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
 
@@ -450,8 +465,14 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int mkdir2 (char *pathname) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // mkdir2 // failed initializing\n");
         return ERROR;
+    }
+    if(pathname == NULL) {
+        fprintf(stderr, "!ERROR! // mkdir2 // pathname NULL\n");
+        return ERROR;
+    }
     //TODO implementação
 
     /** PRIMEIRO LER ACIMA **/
@@ -459,8 +480,10 @@ int mkdir2 (char *pathname) {
     struct t2fs_record* recordOfParentDirectory;
     recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
 
-    if(recordOfParentDirectory == NULL)
+    if(recordOfParentDirectory == NULL) {
+        fprintf(stderr, "!ERROR! // mkdir2 // record of parent directory not found\n");
         return ERROR;
+    }
 
     getInodeToBeingWorkedInode(recordOfParentDirectory->inodeNumber);
 
@@ -472,8 +495,10 @@ int mkdir2 (char *pathname) {
     char newDirectoryName[59];
 
     char* position = rstrstr(pathname, "/");
-    if(position == NULL && recordOfParentDirectory->inodeNumber != 0)
+    if(position == NULL && recordOfParentDirectory->inodeNumber != 0) {
+        fprintf(stderr, "!ERROR! // mkdir2 // pathname is invalid and isn't root\n");
         return ERROR;
+    }
 
     subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
 
@@ -482,8 +507,10 @@ int mkdir2 (char *pathname) {
 
     int index;
     for(index = 2; index < 16; index++) {
-        if(strcmp(records[index].name, newDirectoryName))
+        if(strcmp(records[index].name, newDirectoryName)) {
+            fprintf(stderr, "!ERROR! // mkdir2 // directory with same name is target directory\n");
             return ERROR;
+        }
     }
     int vacantBlock = searchBitmap2(controller->freeBlockBitmap, 0);
 
@@ -521,6 +548,7 @@ int mkdir2 (char *pathname) {
     if(errorCode) {
         free(newInode);
         free(newRecord);
+        fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
         return ERROR;
     }
 
@@ -532,6 +560,7 @@ int mkdir2 (char *pathname) {
     if(errorCode) {
         free(newInode);
         free(newRecord);
+        fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
         return ERROR;
     }
 
@@ -544,6 +573,7 @@ int mkdir2 (char *pathname) {
         if(errorCode) {
             free(newInode);
             free(newRecord);
+            fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
             return ERROR;
         }
     }
@@ -578,8 +608,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int rmdir2 (char *pathname) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // rmdir2 // failed initializing\n");
         return ERROR;
+    }
+
+    if(pathname == NULL) {
+        fprintf(stderr, "!ERROR! // rmdir2 // pathname is NULL\n");
+        return ERROR;
+    }
 
     //TODO implementação
 
@@ -588,8 +625,10 @@ int rmdir2 (char *pathname) {
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(pathname);
 
-    if(recordOfPath == NULL)
+    if(recordOfPath == NULL) {
+        fprintf(stderr, "!ERROR! // rmdir2 // record of path not found\n");
         return ERROR;
+    }
 
     getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
 
@@ -603,8 +642,10 @@ int rmdir2 (char *pathname) {
 
     int index;
     for(index = 2; index < 16; index++) {
-        if(&records[index] != NULL) //directory not empty
+        if(&records[index] != NULL) {
+            fprintf(stderr, "!ERROR! // rmdir2 // directory not empty\n");
             return ERROR;
+        }
     }
 
     struct t2fs_record* recordOfFatherDir = NULL;
@@ -621,8 +662,11 @@ int rmdir2 (char *pathname) {
             break;
     }
 
-    if(&records[index] == NULL)
+    if(&records[index] == NULL) {
+        fprintf(stderr, "!ERROR! // rmdir2 // directory not found in parent directory\n");
         return ERROR;
+    }
+
 
     records[index].TypeVal = TYPEVAL_INVALIDO;
 
@@ -648,8 +692,10 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int chdir2 (char *pathname) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // chdir2 // failed initializing\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
 
@@ -660,8 +706,10 @@ int chdir2 (char *pathname) {
     if(recordOfPath && (pathname[0] == '.' && (pathname[1] == '.' || pathname[1] == '/' )) )
         recordOfPath = relativePathExists(pathname, recordOfPath, TYPEVAL_DIRETORIO);
 
-    if(recordOfPath == NULL)
+    if(recordOfPath == NULL) {
+        fprintf(stderr, "!ERROR! // chdir2 // path not found\n");
         return ERROR;
+    }
 
     *currentDirectory = *recordOfPath;
 
@@ -683,9 +731,11 @@ Entra:	pathname -> buffer para onde copiar o pathname do diretório de trabalho
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int getcwd2 (char *pathname, int size) { //TODO CASOS DE TESTE
-    if(checkInitialization())
+int getcwd2 (char *pathname, int size) {
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // getcwd2 // failed initializing\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
 
@@ -708,28 +758,37 @@ Entra:	pathname -> caminho do diretório a ser aberto
 Saída:	Se a operação foi realizada com sucesso, a função retorna o identificador do diretório (handle).
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
-DIR2 opendir2 (char *pathname) { //TODO CASOS DE TESTE
-    if(checkInitialization())
+DIR2 opendir2 (char *pathname) {
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // opendir2 // failed initializing\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
 
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(pathname);
 
-    if(recordOfPath == NULL)
+    if(recordOfPath == NULL) {
+        fprintf(stderr, "!ERROR! // opendir2 // path not found\n");
         return ERROR;
+    }
 
     int index;
     int emptySpace = -1;
     for(index = 0; index < MAX_OPEN_DIRECTORIES; index++) {
         if(openedDirectories[index].valid == true) {
             if(openedDirectories[index].directoryRecord == recordOfPath) {
+                fprintf(stderr, "!ERROR! // opendir2 // directory already opened\n");
                 return ERROR;
             }
         }
-        else if(emptySpace == -1)
+        else if(emptySpace == -1 && index <= 16)
             emptySpace = index;
+        else {
+            fprintf(stderr, "!ERROR! // opendir2 // no empty space in opened directories\n");
+            return ERROR;
+        }
     }
 
     struct openDirectory* newOpenedDirectory = malloc(sizeof(struct openDirectory));
@@ -764,11 +823,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero ( e "dentry" não será válido)
 -----------------------------------------------------------------------------*/
 int readdir2 (DIR2 handle, DIRENT2 *dentry) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // readdir2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isDirectoryHandleValid(handle))
+    if(!isDirectoryHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // readdir2 // invalid handle\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
     /** TODO ENTENDER ESSA PORRA! **/
@@ -790,11 +853,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int closedir2 (DIR2 handle) {//TODO CASOS DE TESTE
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // closedir2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isDirectoryHandleValid(handle))
+    if(!isDirectoryHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // closedir2 // invalid handle\n");
         return ERROR;
+    }
 
     /** TODO TESTAR! **/
 
@@ -806,8 +873,10 @@ int closedir2 (DIR2 handle) {//TODO CASOS DE TESTE
 /*-----------------------------------------------------------------------------*/
 //TODO documentação
 bool printRecords(struct t2fs_record* records) {
-    if (records == NULL)
+    if (records == NULL) {
+        fprintf(stderr, "!ERROR! // printRecords // records NULL\n");
         return ERROR;
+    }
 
     int index;
 

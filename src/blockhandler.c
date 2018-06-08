@@ -29,8 +29,10 @@ bool readBlockToBeingWorkedBlock(int blockIndex) {
 
     int index;
     for(index = 0; index < 4; index++) {
-       if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 )
+        if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 ) {
+            fprintf(stderr, "!ERROR! // readBlockToBeingWorkedBlock // error reading sector\n");
             return ERROR;
+        }
         memcpy(&beingWorkedBlock[index*SECTOR_SIZE], &buffer, sizeof(buffer));
     }
     return SUCCESS;
@@ -40,8 +42,10 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
-        if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 )
+        if(read_sector(blockIndex*controller->boot.blockSize + index, buffer) != 0 ) {
+            fprintf(stderr, "!ERROR! // readBlockToAuxiliaryWorkingBlock // error reading sector\n");
             return ERROR;
+        }
         memcpy(&auxiliaryWorkingBlock[index*SECTOR_SIZE], &buffer, sizeof(buffer));
     }
 
@@ -81,8 +85,10 @@ bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBe
     for(index = 0; index < 4; index++) {
         memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
-        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 )
+        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 ) {
+            fprintf(stderr, "!ERROR! // writeBlockToInodeDataSection // error writing sector\n");
             return ERROR;
+        }
     }
 
     return SUCCESS;
@@ -94,8 +100,10 @@ bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBe
     for(index = 0; index < 4; index++) {
         memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
-        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 )
+        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 ) {
+            fprintf(stderr, "!ERROR! // writeBlockToBlockDataSection // error writing sector\n");
             return ERROR;
+            }
     }
 
     return SUCCESS;
