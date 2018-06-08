@@ -75,7 +75,7 @@ void printSubDirectories(int level, DWORD dataPointer) {
     free(records);
 }
 
-struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory) {
+struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory, int typeValOfTarget) {
     if(directory->TypeVal != TYPEVAL_DIRETORIO || directory == NULL)
         return NULL;
 
@@ -99,23 +99,6 @@ struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory
 
     getInodeToBeingWorkedInode(directory->inodeNumber);
     DWORD firstAdress = beingWorkedInode->dataPtr[0];
-    DWORD secondAdress = beingWorkedInode->dataPtr[1];
-
-    position = strstr(cleanedPath, "../");
-    if(position) {
-        subString(path, cleanedPath, 3, (int) strlen(cleanedPath) - 3);
-
-        struct t2fs_record* records;
-        records = inodeDataPointerToRecords(secondAdress);
-
-        return absolutePathExists(cleanedPath,&records[1]); //search in upper folder
-    }
-
-    position = strstr(cleanedPath, "./");
-    if(position) {
-        subString(path, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
-}
-
 
     position = strstr(cleanedPath, "/");
     if(position) {
@@ -128,24 +111,60 @@ struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory
     records = inodeDataPointerToRecords(firstAdress);
     for(index = 0; index < 16; index++) {
         if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
-                if(!strcmp(dirBeingLookedFor, records[index].name))
-                    recordOfPath = absolutePathExists(restOfThePath, &records[index]);
+                if(!strcmp(dirBeingLookedFor, records[index].name)) {
+                    recordOfPath = absolutePathExists(restOfThePath, &records[index], typeValOfTarget);
+                    break;
+                }
         }
     }
     return recordOfPath;
 }
 
 struct t2fs_record* findRecordOfPath(char* path) {
+    if(rootDirectory == NULL || currentDirectory == NULL)
+        return NULL;
+
     struct t2fs_record* record;
 
-    getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
-    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+    struct t2fs_record* returnRecord;
+    if(path[0] == '/' || path[0] != '.') {
+        getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
+        record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+        returnRecord = absolutePathExists(&path[1] , record, TYPEVAL_DIRETORIO);
+    }
+    else{
+        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+        record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+        returnRecord = relativePathExists(&path[0] , record, TYPEVAL_DIRETORIO);
+    }
+
+    if(returnRecord->TypeVal != TYPEVAL_DIRETORIO)
+        return NULL;
+
+    return returnRecord;
+}
+
+struct t2fs_record* findRecordOfFile(char* path) {
+    if(rootDirectory == NULL || currentDirectory == NULL)
+        return NULL;
+
+    struct t2fs_record* record;
 
     struct t2fs_record* returnRecord;
-    if(path[0] == '/' || path[0] != '.')
-        returnRecord = absolutePathExists(&path[1] , record);
-    else
-        returnRecord = relativePathExists(&path[0] , record);
+    if(path[0] == '/' || path[0] != '.') {
+        getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
+        record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+        returnRecord = absolutePathExists(&path[1] , record, TYPEVAL_REGULAR);
+    }
+    else{
+        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+        record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+        returnRecord = relativePathExists(&path[0] , record, TYPEVAL_REGULAR);
+    }
+
+    if(returnRecord->TypeVal != TYPEVAL_REGULAR)
+        return NULL;
+
     return returnRecord;
 }
 
@@ -187,15 +206,15 @@ void getPathToDirectory(struct t2fs_record* directory, char* completePath, int u
 
 }
 
-struct t2fs_record* returnRecordOfParentDirectory(char* fullAbsolutePath) {
+struct t2fs_record* returnRecordOfParentDirectory(char* path) {
     char* position;
     char cleanedPath[MAX_PATH_LENGTH];
 
-    position = rstrstr(fullAbsolutePath, "/");
+    position = rstrstr(path, "/");
     if(position == NULL)
         return NULL;
 
-    subString(fullAbsolutePath, cleanedPath, 0, (int) (position - fullAbsolutePath) );
+    subString(path, cleanedPath, 0, (int) (position - path) );
 
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(cleanedPath);
@@ -206,7 +225,19 @@ struct t2fs_record* returnRecordOfParentDirectory(char* fullAbsolutePath) {
     return recordOfPath;
 }
 
-struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory) {
+bool getNameOfDirectoryAtEndOfPath(char* path, char* name) {
+    char* position;
+
+    position = rstrstr(path, "/");
+    if(position == NULL)
+        return ERROR;
+
+    subString(path, name, 0, (int) (position - path) );
+
+    return SUCCESS;
+}
+
+struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory, int typeValOfTarget) {
     if(directory->TypeVal != TYPEVAL_DIRETORIO || directory == NULL)
         return NULL;
 
@@ -223,30 +254,28 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
     char restOfThePath[MAX_PATH_LENGTH];
     char cleanedPath[MAX_PATH_LENGTH];
 
+    getInodeToBeingWorkedInode(directory->inodeNumber);
+    DWORD firstAdress = beingWorkedInode->dataPtr[0];
+
     dirBeingLookedFor[0] = '\0';
     restOfThePath[0] = '\0';
     cleanedPath[0] = '\0';
     strcpy(cleanedPath,path);
-
-    getInodeToBeingWorkedInode(directory->inodeNumber);
-    DWORD firstAdress = beingWorkedInode->dataPtr[0];
-    DWORD secondAdress = beingWorkedInode->dataPtr[1];
 
     position = strstr(cleanedPath, "../");
     if(position) {
         subString(path, cleanedPath, 3, (int) strlen(cleanedPath) - 3);
 
         struct t2fs_record* records;
-        records = inodeDataPointerToRecords(secondAdress);
+        records = inodeDataPointerToRecords(firstAdress);
 
-        return relativePathExists(cleanedPath,&records[1]); //search in upper folder
+        return relativePathExists(cleanedPath, &records[1], typeValOfTarget); //search in upper folder
     }
 
     position = strstr(cleanedPath, "./");
     if(position) {
         subString(path, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
-}
-
+    }
 
     position = strstr(cleanedPath, "/");
     if(position) {
@@ -256,11 +285,26 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
     else
         strcpy(dirBeingLookedFor, cleanedPath);
 
+    position = strstr(restOfThePath, "/"); //TODO refatorar
+    if(!position && typeValOfTarget == TYPEVAL_REGULAR) {
+        records = inodeDataPointerToRecords(firstAdress);
+        for(index = 0; index < 16; index++) {
+            if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
+                    if(!strcmp(dirBeingLookedFor, records[index].name)) {
+                        return &records[index];
+                    }
+            }
+        }
+
+    }
+
     records = inodeDataPointerToRecords(firstAdress);
     for(index = 0; index < 16; index++) {
         if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
-                if(!strcmp(dirBeingLookedFor, records[index].name))
-                    recordOfPath = relativePathExists(restOfThePath, &records[index]);
+                if(!strcmp(dirBeingLookedFor, records[index].name)) {
+                    recordOfPath = relativePathExists(restOfThePath, &records[index], typeValOfTarget);
+                    break;
+                }
         }
     }
     return recordOfPath;

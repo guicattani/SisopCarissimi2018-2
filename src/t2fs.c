@@ -211,9 +211,50 @@ FILE2 open2 (char *filename) {
     if(checkInitialization())
         return ERROR;
 
+    if(filename == NULL)
+        return ERROR;
+
     //TODO implementação
 
     /** PRIMEIRO LER ACIMA **/
+
+    int index;
+    int emptySpace = -1;
+    for(index = 0; index < MAX_OPEN_FILES; index++) {
+        if(openedFiles[index].valid == true) {
+            if(strcmp(filename, openedFiles[index].fileRecord->name)) {
+                return ERROR;
+            }
+        }
+        else if(emptySpace == -1)
+            emptySpace = index;
+    }
+
+    struct t2fs_record* recordOfFile = NULL;
+    struct t2fs_record* records = inodeDataPointerToRecords(currentDirectory->inodeNumber);
+    for(index = 0; index < 16; index++) {
+        if(records[index].TypeVal == TYPEVAL_REGULAR && records[index].inodeNumber != INVALID_PTR
+           && strcmp(records[index].name, filename)) {
+            *recordOfFile = records[index];
+            break;
+           }
+
+    }
+    if(recordOfFile == NULL)
+        return ERROR;
+
+    struct openFile* newOpenedFile = malloc(sizeof(struct openFile));
+
+    newOpenedFile->valid = true;
+    newOpenedFile->currentPointer = 0;
+
+    getInodeToBeingWorkedInode(recordOfFile->inodeNumber);
+    *newOpenedFile->fileInode = *beingWorkedInode;
+    *newOpenedFile->fileRecord = *recordOfFile;
+
+    openedFiles[emptySpace] = *newOpenedFile;
+
+    return emptySpace;
 
     //TESTES
     //verifica se arquivo existe no diretorio, vejam o diretory.c pra funções pra ajudar nisso
@@ -223,8 +264,6 @@ FILE2 open2 (char *filename) {
     //retorna o número dessa entrada (isso é um handle)
 
     //cria uma nova entrada para a pra estrutura openedFiles VER HEADER
-
-    return SUCCESS;
 }
 
 
@@ -270,9 +309,24 @@ int read2 (FILE2 handle, char *buffer, int size) {
 
     if(!isFileHandleValid(handle))
         return ERROR;
+
+    if(size <= 0)
+        return ERROR;
     //TODO implementação
 
     /** PRIMEIRO LER ACIMA **/
+
+    if(size > openedFiles[handle].fileInode->bytesFileSize)
+        return ERROR;
+
+    if(openedFiles[handle].fileInode->bytesFileSize > 1024 || openedFiles[handle].currentPointer > 1024)
+        return ERROR; //more than one block
+
+    readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
+
+    memcpy(buffer, &beingWorkedBlock[openedFiles[handle].currentPointer], size);
+
+    openedFiles[handle].currentPointer += size;
 
     //TESTES
     //testar se o size não é maior que o arquivo
@@ -456,9 +510,11 @@ int mkdir2 (char *pathname) {
     setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
     setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
 
+    //CRIAR O . E O .. para o novo diretorio TODO
+
     struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
-    newRecord->TypeVal = 2;
-    strcpy(newRecord->name,newDirectoryName);
+    newRecord->TypeVal = TYPEVAL_DIRETORIO;
+    strcpy(newRecord->name,".");
     newRecord->inodeNumber = vacantInode;
 
     bool errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
@@ -468,7 +524,29 @@ int mkdir2 (char *pathname) {
         return ERROR;
     }
 
-    //CRIAR O . E O .. para o novo diretorio TODO
+    newRecord->TypeVal = TYPEVAL_DIRETORIO;
+    strcpy(newRecord->name,"..");
+    newRecord->inodeNumber = records[0].inodeNumber;
+
+    errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
+    if(errorCode) {
+        free(newInode);
+        free(newRecord);
+        return ERROR;
+    }
+
+    for(index = 2; index < 16; index++) {
+        newRecord->TypeVal = TYPEVAL_INVALIDO;
+        strcpy(newRecord->name,"\0");
+        newRecord->inodeNumber = 0;
+
+        errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
+        if(errorCode) {
+            free(newInode);
+            free(newRecord);
+            return ERROR;
+        }
+    }
 
     free(newInode);
     free(newRecord);
@@ -507,7 +585,13 @@ int rmdir2 (char *pathname) {
 
     /** PRIMEIRO LER ACIMA **/
 
-    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+    struct t2fs_record* recordOfPath;
+    recordOfPath = findRecordOfPath(pathname);
+
+    if(recordOfPath == NULL)
+        return ERROR;
+
+    getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
 
     if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
         return ERROR; //TODO
@@ -519,10 +603,28 @@ int rmdir2 (char *pathname) {
 
     int index;
     for(index = 2; index < 16; index++) {
-        if(strcmp(records[index].name, pathname))
+        if(&records[index] != NULL) //directory not empty
             return ERROR;
     }
 
+    struct t2fs_record* recordOfFatherDir = NULL;
+    *recordOfFatherDir = records[1];
+
+    getInodeToBeingWorkedInode(recordOfFatherDir->inodeNumber);
+    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+    char nameOfBeingDeletedDir[MAX_PATH_LENGTH];
+    getNameOfDirectoryAtEndOfPath(pathname, nameOfBeingDeletedDir);
+
+    for(index = 2; index < 16; index++) {
+        if(records[index].name == nameOfBeingDeletedDir) //directory not empty
+            break;
+    }
+
+    if(&records[index] == NULL)
+        return ERROR;
+
+    records[index].TypeVal = TYPEVAL_INVALIDO;
 
     //muito parecido com o delete file,  ver acima
     //mas precisa verificar se está vazio, conforme acima
@@ -545,7 +647,7 @@ Entra:	pathname -> caminho do novo diretório de trabalho.
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int chdir2 (char *pathname) { //TODO CASOS DE TESTE
+int chdir2 (char *pathname) {
     if(checkInitialization())
         return ERROR;
 
@@ -556,7 +658,7 @@ int chdir2 (char *pathname) { //TODO CASOS DE TESTE
     recordOfPath = findRecordOfPath(pathname);
 
     if(recordOfPath && (pathname[0] == '.' && (pathname[1] == '.' || pathname[1] == '/' )) )
-        recordOfPath = relativePathExists(pathname, recordOfPath);
+        recordOfPath = relativePathExists(pathname, recordOfPath, TYPEVAL_DIRETORIO);
 
     if(recordOfPath == NULL)
         return ERROR;
@@ -640,6 +742,8 @@ DIR2 opendir2 (char *pathname) { //TODO CASOS DE TESTE
 
     openedDirectories[emptySpace] = *newOpenedDirectory;
 
+    free(newOpenedDirectory);
+
     return emptySpace;
 }
 
@@ -666,12 +770,12 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) {
     if(!isDirectoryHandleValid(handle))
         return ERROR;
 
-    /** PRIMEIRO LER ACIMA **/
+    /** TODO TESTAR! **/
+    /** TODO ENTENDER ESSA PORRA! **/
 
-    //TODO implementação
-
-    //muito parecido com o readfile, ver acima
-    //mas tem que usar a estrutura dirent2 que tem no header t2fs.h
+    dentry->fileType = openedDirectories[handle].directoryRecord->TypeVal;
+    dentry->fileSize = openedDirectories[handle].bytesFileSize;
+    strcpy(dentry->name, openedDirectories[handle].directoryRecord->name);
 
     return SUCCESS;
 }

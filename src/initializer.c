@@ -60,7 +60,12 @@ t_control* initializeLibrary() {
     if(recordTest)
         printf("found it!!!!!");
 
-    currentDirectory* = recordTest*
+    if(recordTest != NULL)
+        *currentDirectory = *recordTest;
+
+    recordTest = findRecordOfPath("../dir11");
+    if(recordTest)
+        printf("found it!!!!!");
 
 
     getInodeToBeingWorkedInode(5);

@@ -12,8 +12,8 @@
 #define SIZEIDENTIFY 67
 #define GROUPNAMESTRING "Guilherme Cattani 243589"
 
-#define MAX_OPEN_FILES 20
-#define MAX_OPEN_DIRECTORIES 20
+#define MAX_OPEN_FILES 10
+#define MAX_OPEN_DIRECTORIES 10
 
 #define ERROR -1
 #define SUCCESS 0
@@ -80,7 +80,7 @@ typedef struct openDirectory {
 
 typedef struct openFile {
     bool valid;
-    DWORD currentPointer;
+    int currentPointer;
     struct t2fs_inode*   fileInode;
     struct t2fs_record*  fileRecord;
 } t_openFile;
@@ -88,8 +88,6 @@ typedef struct openFile {
 typedef struct controlStruct {
 
 	struct t2fs_superbloco boot;
-	struct openFile* openFilesArray[MAX_OPEN_FILES];
-	struct openDirectory* openedDirectories[MAX_OPEN_DIRECTORIES];
 	int freeBlockBitmap;
 	int freeInodeBitmap;
 
