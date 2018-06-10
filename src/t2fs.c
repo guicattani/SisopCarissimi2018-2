@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 
 bool initialized = false;
 
@@ -45,11 +46,16 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int identify2 (char *name, int size) {
-   if(checkInitialization())
+   if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // identify2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(size < SIZEIDENTIFY)
+    if(size < SIZEIDENTIFY) {
+        fprintf(stderr, "!ERROR! // identify2 // argument 'size' is less than string total length\n");
         return ERROR;
+    }
+
 
     int index = 0;
     while ((name[index] = GROUPNAMESTRING[index]) != '\0') {
@@ -74,12 +80,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle d
 	Em caso de erro, deve ser retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 FILE2 create2 (char *filename) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // create2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(filename == NULL)
+    if(filename == NULL) {
+        fprintf(stderr, "!ERROR! // create2 // filename is NULL\n");
         return ERROR;
-
+    }
     getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
     if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
@@ -92,16 +101,18 @@ FILE2 create2 (char *filename) {
 
     int index;
     for(index = 2; index < 16; index++) {
-        if(strcmp(records[index].name, filename))
+        if(strcmp(records[index].name, filename)) {
+            fprintf(stderr, "!ERROR! // create2 // file already is on directory\n");
             return ERROR;
+        }
     }
-    int vacantBlock = searchBitmap2(controller->freeBlockBitmap, 0);
+    int vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
 
     unsigned char block[1024];
     memset(block, 0, sizeof(block));
     writeBlockToBlockDataSection(block, vacantBlock);
 
-    int vacantInode = searchBitmap2(controller->freeInodeBitmap, 0);
+    int vacantInode = searchBitmap2(BITMAP_INODE, 0);
 
     struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
     newInode->blocksFileSize = 1;
@@ -117,8 +128,8 @@ FILE2 create2 (char *filename) {
     memcpy(block, newInode, sizeof(newInode));
     writeBlockToInodeDataSection(block, vacantInode);
 
-    setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
-    setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
+    setBitmap2(BITMAP_DADOS, vacantBlock, 1);
+    setBitmap2(BITMAP_INODE, vacantInode, 1);
 
     struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
     newRecord->TypeVal = 1;
@@ -129,12 +140,15 @@ FILE2 create2 (char *filename) {
     if(errorCode) {
         free(newInode);
         free(newRecord);
+        fprintf(stderr, "!ERROR! // create2 // error appending record\n");
         return ERROR;
     }
 
     int fileHandle = open2(filename);
-    if(fileHandle == -1)
+    if(fileHandle == -1) {
+        fprintf(stderr, "!ERROR! // create2 // tried to open created file and failed\n");
         return ERROR;
+    }
 
     free(newInode);
     free(newRecord);
@@ -152,11 +166,15 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero)
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
 int delete2 (char *filename) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // delete2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(filename == NULL)
+    if(filename == NULL) {
+        fprintf(stderr, "!ERROR! // delete2 // filename is NULL\n");
         return ERROR;
+    }
 
     getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
@@ -174,8 +192,10 @@ int delete2 (char *filename) {
             break;
     }
 
-    if(index == 16)
+    if(index == 16) {
+        fprintf(stderr, "!ERROR! // delete2 // file not found in directory\n");
         return ERROR;
+    }
 
     getInodeToBeingWorkedInode(records[index].inodeNumber);
 
@@ -184,8 +204,8 @@ int delete2 (char *filename) {
     if(beingWorkedInode->blocksFileSize > 2)
         return ERROR; //TODO
 
-    setBitmap2(controller->freeBlockBitmap, beingWorkedInode->dataPtr[0], 0);
-    setBitmap2(controller->freeInodeBitmap, records[index].inodeNumber, 0);
+    setBitmap2(BITMAP_DADOS, beingWorkedInode->dataPtr[0], 0);
+    setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
 
     memset(&records[index], 0, sizeof(struct t2fs_record));
 
@@ -208,11 +228,14 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o handle d
 	Em caso de erro, deve ser retornado um valor negativo
 -----------------------------------------------------------------------------*/
 FILE2 open2 (char *filename) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // open2 // failed initializing\n");
         return ERROR;
-
-    if(filename == NULL)
+    }
+    if(filename == NULL) {
+        fprintf(stderr, "!ERROR! // open2 // filename is NULL\n");
         return ERROR;
+    }
 
     //TODO implementação
 
@@ -223,6 +246,7 @@ FILE2 open2 (char *filename) {
     for(index = 0; index < MAX_OPEN_FILES; index++) {
         if(openedFiles[index].valid == true) {
             if(strcmp(filename, openedFiles[index].fileRecord->name)) {
+                fprintf(stderr, "!ERROR! // open2 // file already opened\n");
                 return ERROR;
             }
         }
@@ -231,26 +255,28 @@ FILE2 open2 (char *filename) {
     }
 
     struct t2fs_record* recordOfFile = NULL;
-    struct t2fs_record* records = inodeDataPointerToRecords(currentDirectory->inodeNumber);
-    for(index = 0; index < 16; index++) {
-        if(records[index].TypeVal == TYPEVAL_REGULAR && records[index].inodeNumber != INVALID_PTR
-           && strcmp(records[index].name, filename)) {
-            *recordOfFile = records[index];
-            break;
-           }
+    recordOfFile = findRecordOfFile(filename);
 
-    }
-    if(recordOfFile == NULL)
+    if(recordOfFile == NULL) {
+        fprintf(stderr, "!ERROR! // open2 // failed to find record of file\n");
         return ERROR;
+    }
 
     struct openFile* newOpenedFile = malloc(sizeof(struct openFile));
 
     newOpenedFile->valid = true;
     newOpenedFile->currentPointer = 0;
 
+    newOpenedFile->fileInode = malloc(sizeof(struct t2fs_inode));
+    newOpenedFile->fileRecord = malloc(sizeof(struct t2fs_record));
+
     getInodeToBeingWorkedInode(recordOfFile->inodeNumber);
     *newOpenedFile->fileInode = *beingWorkedInode;
     *newOpenedFile->fileRecord = *recordOfFile;
+
+//    char name[MAX_FILE_NAME_SIZE];
+//    getNameOfFileByInode(newOpenedFile->fileRecord->inodeNumber, name);
+//    memcpy(newOpenedFile->fileRecord->name, name, strlen(name)+1);
 
     openedFiles[emptySpace] = *newOpenedFile;
 
@@ -277,14 +303,16 @@ Entra:	handle -> identificador do arquivo a ser fechado
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int close2 (FILE2 handle) { //TODO CASOS DE TESTE
-    if(checkInitialization())
+int close2 (FILE2 handle) {
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // close2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isFileHandleValid(handle))
+    if(!isFileHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // close2 // handle is invalid\n");
         return ERROR;
-
-    /** TODO TESTAR! **/
+    }
 
     openedFiles[handle].valid = false;
 
@@ -306,45 +334,122 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número 
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int read2 (FILE2 handle, char *buffer, int size) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // read2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isFileHandleValid(handle))
+    if(!isFileHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // read2 // handle is invalid\n");
         return ERROR;
+    }
 
-    if(size <= 0)
+    if(size <= 0) {
+        fprintf(stderr, "!ERROR! // read2 // argument 'size' is negative\n");
         return ERROR;
-    //TODO implementação
+    }
 
-    /** PRIMEIRO LER ACIMA **/
+    if(size > openedFiles[handle].fileInode->bytesFileSize) {
+        fprintf(stderr, "!WARNING! // read2 // argument 'size' is bigger than filesize\n");
+        size = openedFiles[handle].fileInode->bytesFileSize;
+    }
 
-    if(size > openedFiles[handle].fileInode->bytesFileSize)
-        return ERROR;
+    int bufferOfBuffer[1024];
+    int currentPositionOfBuffer = 0;
 
-    if(openedFiles[handle].fileInode->bytesFileSize > 1024 || openedFiles[handle].currentPointer > 1024)
-        return ERROR; //more than one block
+    int bytesToBeReadFromCurrentBlock;
+    int bytesLeftInCurrentBlock = 1024 - openedFiles[handle].currentPointer % 1024;
 
-    readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
+    if(size - bytesLeftInCurrentBlock > 0)
+        bytesToBeReadFromCurrentBlock = bytesLeftInCurrentBlock;
+    else
+        bytesToBeReadFromCurrentBlock = size;
 
-    memcpy(buffer, &beingWorkedBlock[openedFiles[handle].currentPointer], size);
+    int completeBlocksToBeRead =  floor((size - bytesLeftInCurrentBlock)/1024);
+    int bytesRemainderOfBlocksToBeRead = size - completeBlocksToBeRead*1024 - bytesToBeReadFromCurrentBlock;
 
-    openedFiles[handle].currentPointer += size;
+    if(openedFiles[handle].currentBlock == 0) {
+        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
+        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+        memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+        currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
-    //TESTES
-    //testar se o size não é maior que o arquivo
+        openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+    }
 
-    //achar o arquivo pelo inode, isso tem na estrutura do openedFiles
-    //verificar qual o tamanho do size, pra ver se está tudo nos ponteiros diretos (cada ponteiro direto aponta pra um bloco cheio de DWORDs)
+    if(openedFiles[handle].currentBlock == 1) {
 
-    //se não tem que ver como alocar pros ponteiros indiretos
+        if(size - currentPositionOfBuffer > 1024)
+            bytesToBeReadFromCurrentBlock = 1024;
+        else
+            bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
 
-    //le pro buffer com read to working block e aí usa memcpy pro buffer
+        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[1]);
+        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+        memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+        currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
-    //atenção, lembrar que
-    //conforme escrito acima:
-    //*Após a leitura, o contador de posição (current pointer) deve ser ajustado para o byte seguinte ao último lido.*
+        openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+    }
 
-    //retorna SUCCESS (0) ou ERROR (-1)
+    if(openedFiles[handle].currentBlock > 1 && openedFiles[handle].currentBlock < 258) { //256 indirects 2 directs
+        int adressesPerPointerBlock = 1024/sizeof(DWORD);
+        DWORD collectionOfDataPointers[adressesPerPointerBlock];
+        if(bytesRemainderOfBlocksToBeRead>0)
+            readAdressesToDataPointerCollection(collectionOfDataPointers, openedFiles[handle].fileInode->singleIndPtr, completeBlocksToBeRead+1); //if there is a remainder
+        else
+            readAdressesToDataPointerCollection(collectionOfDataPointers, openedFiles[handle].fileInode->singleIndPtr, completeBlocksToBeRead);
+        int index = 0;
+        while(currentPositionOfBuffer < size) {
+            if(size - currentPositionOfBuffer > 1024)
+                bytesToBeReadFromCurrentBlock = 1024;
+            else
+                bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
+
+            readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
+            memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+            memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+            currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
+
+            openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+            openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+
+            index++;
+            completeBlocksToBeRead--;
+        }
+    }
+    if(openedFiles[handle].currentBlock > 258 && currentPositionOfBuffer < size) { //256 indirects 2 directs
+        int adressesPerPointerBlock = 1024/sizeof(DWORD);
+        DWORD collectionOfDataPointers[adressesPerPointerBlock];
+        DWORD auxiliaryCollectionOfDataPointers[adressesPerPointerBlock];
+        readAdressesToDataPointerCollection(collectionOfDataPointers,openedFiles[handle].fileInode->doubleIndPtr, completeBlocksToBeRead+1);
+
+        int index = 0;
+        while(currentPositionOfBuffer < size ) {
+            int secondIndex = 0;
+            readAdressesToDataPointerCollection(auxiliaryCollectionOfDataPointers,collectionOfDataPointers[index], completeBlocksToBeRead+1);
+            while(currentPositionOfBuffer < size || secondIndex < adressesPerPointerBlock) {
+                if(size - currentPositionOfBuffer > 1024)
+                    bytesToBeReadFromCurrentBlock = 1024;
+                else
+                    bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
+
+                readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
+                memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+                memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+                currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
+
+                openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+                openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+
+                secondIndex++;
+                completeBlocksToBeRead--;
+            }
+            index++;
+        }
+    }
 
     return SUCCESS;
 }
@@ -363,17 +468,117 @@ Saída:	Se a operação foi realizada com sucesso, a função retorna o número 
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
 int write2 (FILE2 handle, char *buffer, int size) {
-    if(checkInitialization())
+    if(checkInitialization()) {
+        fprintf(stderr, "!ERROR! // write2 // failed initializing\n");
         return ERROR;
+    }
 
-    if(!isFileHandleValid(handle))
+    if(!isFileHandleValid(handle)) {
+        fprintf(stderr, "!ERROR! // write2 // handle is invalid\n");
         return ERROR;
+    }
 
-    //TODO implementação
+    if(size <= 0) {
+        fprintf(stderr, "!ERROR! // write2 // argument 'size' is negative\n");
+        return ERROR;
+    }
 
-    /** PRIMEIRO LER ACIMA **/
+    int bufferOfBuffer[1024];
+    int currentPositionOfBuffer = 0;
 
-    //muito parecido com o read, ver acima
+    int bytesToBeWrittenToCurrentBlock;
+    int bytesLeftInCurrentBlock = 1024 - openedFiles[handle].currentPointer % 1024;
+
+    if(size - bytesLeftInCurrentBlock > 0)
+        bytesToBeWrittenToCurrentBlock = bytesLeftInCurrentBlock;
+    else
+        bytesToBeWrittenToCurrentBlock = size;
+
+    int completeBlocksToBeWritten=  floor((size - bytesLeftInCurrentBlock)/1024);
+    int bytesRemainderOfBlocksToBeWritten = size - completeBlocksToBeWritten*1024 - bytesToBeWrittenToCurrentBlock;
+
+    if(openedFiles[handle].currentBlock == 0) {
+        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
+        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeWrittenToCurrentBlock);
+        memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeWrittenToCurrentBlock);
+        currentPositionOfBuffer += bytesToBeWrittenToCurrentBlock;
+
+        openedFiles[handle].currentPointer += bytesToBeWrittenToCurrentBlock;
+        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+    }
+
+    if(openedFiles[handle].currentBlock == 1) {
+
+        if(size - currentPositionOfBuffer > 1024)
+            bytesToBeWrittenToCurrentBlock = 1024;
+        else
+            bytesToBeWrittenToCurrentBlock = bytesRemainderOfBlocksToBeWritten;
+
+        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[1]);
+        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeWrittenToCurrentBlock);
+        memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeWrittenToCurrentBlock);
+        currentPositionOfBuffer += bytesToBeWrittenToCurrentBlock;
+
+        openedFiles[handle].currentPointer += bytesToBeWrittenToCurrentBlock;
+        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+    }
+
+    if(openedFiles[handle].currentBlock > 1 && openedFiles[handle].currentBlock < 258) { //256 indirects 2 directs
+        int adressesPerPointerBlock = 1024/sizeof(DWORD);
+        DWORD collectionOfDataPointers[adressesPerPointerBlock];
+        if(bytesRemainderOfBlocksToBeWritten>0)
+            readAdressesToDataPointerCollection(collectionOfDataPointers, openedFiles[handle].fileInode->singleIndPtr, completeBlocksToBeWritten+1); //if there is a remainder
+        else
+            readAdressesToDataPointerCollection(collectionOfDataPointers, openedFiles[handle].fileInode->singleIndPtr, completeBlocksToBeWritten);
+        int index = 0;
+        while(currentPositionOfBuffer < size) {
+            if(size - currentPositionOfBuffer > 1024)
+                bytesToBeWrittenToCurrentBlock = 1024;
+            else
+                bytesToBeWrittenToCurrentBlock = bytesRemainderOfBlocksToBeWritten;
+
+            readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
+            memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeWrittenToCurrentBlock);
+            memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeWrittenToCurrentBlock);
+            currentPositionOfBuffer += bytesToBeWrittenToCurrentBlock;
+
+            openedFiles[handle].currentPointer += bytesToBeWrittenToCurrentBlock;
+            openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+
+            index++;
+            completeBlocksToBeWritten--;
+        }
+    }
+    if(openedFiles[handle].currentBlock > 258 && currentPositionOfBuffer < size) { //256 indirects 2 directs
+        int adressesPerPointerBlock = 1024/sizeof(DWORD);
+        DWORD collectionOfDataPointers[adressesPerPointerBlock];
+        DWORD auxiliaryCollectionOfDataPointers[adressesPerPointerBlock];
+        readAdressesToDataPointerCollection(collectionOfDataPointers,openedFiles[handle].fileInode->doubleIndPtr, completeBlocksToBeWritten+1);
+
+        int index = 0;
+        while(currentPositionOfBuffer < size ) {
+            int secondIndex = 0;
+            readAdressesToDataPointerCollection(auxiliaryCollectionOfDataPointers,collectionOfDataPointers[index], completeBlocksToBeWritten+1);
+            while(currentPositionOfBuffer < size || secondIndex < adressesPerPointerBlock) {
+                if(size - currentPositionOfBuffer > 1024)
+                    bytesToBeWrittenToCurrentBlock = 1024;
+                else
+                    bytesToBeWrittenToCurrentBlock = bytesRemainderOfBlocksToBeWritten;
+
+                readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
+                memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeWrittenToCurrentBlock);
+                memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeWrittenToCurrentBlock);
+                currentPositionOfBuffer += bytesToBeWrittenToCurrentBlock;
+
+                openedFiles[handle].currentPointer += bytesToBeWrittenToCurrentBlock;
+                openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+
+                secondIndex++;
+                completeBlocksToBeWritten--;
+            }
+            index++;
+        }
+    }
 
     return SUCCESS;
 }
@@ -402,15 +607,46 @@ int truncate2 (FILE2 handle) {
         return ERROR;
     }
 
-    //TODO implementação
-
     /** PRIMEIRO LER ACIMA **/
+
+    if(!isOpenedFileStructureValid(handle)) {
+        fprintf(stderr, "!ERROR! // truncate2 // file handle structure has errors\n");
+        return ERROR;
+    }
+
+    int currentPointer = openedFiles[handle].currentPointer;
+
+    if(currentPointer > 1024)
+        return ERROR;
+
+    int amountOfBytesToTruncate = openedFiles[handle].currentPointer - openedFiles[handle].fileInode->bytesFileSize;
+
+    if(amountOfBytesToTruncate < 0) {
+        fprintf(stderr, "!ERROR! // truncate2 // current pointer of file has severe errors\n");
+        return ERROR;
+    }
+
+    amountOfBytesToTruncate -= 1024 - currentPointer % 1024; //less bytes being truncated from current block
+
+    readBlockToBeingWorkedBlock(openedFiles[handle].fileRecord->inodeNumber);
+
+    char blockFilledWithZeroes[1024];
+    memset(blockFilledWithZeroes, 0, sizeof(blockFilledWithZeroes));
+    memcpy(blockFilledWithZeroes, beingWorkedBlock, currentPointer);
+
+    memcpy(beingWorkedBlock, blockFilledWithZeroes, sizeof(beingWorkedBlock));
+    writeBlockToBlockDataSection(beingWorkedBlock,openedFiles[handle].fileInode->dataPtr[0]);
+
+    if(amountOfBytesToTruncate % 1024 != 0) {
+        fprintf(stderr, "!ERROR! // truncate2 // someshit went down\n");
+        return ERROR;
+    }
+
+//    unallocateBlocksFromInode( (int)amountOfBytesToTruncate/1024 ,openedFiles[handle].fileInode->bytesFileSize );
 
     /**cuidado que é INCLUSIVE, então currentpointer é sobrescrito com 0**/
     //corta os bytes sobresalentes
 
-    if(openedFiles[handle].fileInode->blocksFileSize > 1)
-        return ERROR;
 
     return SUCCESS;
 }
@@ -435,9 +671,14 @@ int seek2 (FILE2 handle, DWORD offset) { //TODO CASOS DE TESTE
         return ERROR;
     }
 
-    if(!isFileHandleValid(handle) || offset < -1)
+    if(!isFileHandleValid(handle))
     {
-        fprintf(stderr, "!ERROR! // seek2 // file handle invalid or offset invalid\n");
+        fprintf(stderr, "!ERROR! // seek2 // file handle invalid\n");
+        return ERROR;
+    }
+    if(offset < -1)
+    {
+        fprintf(stderr, "!ERROR! // seek2 // offset invalid\n");
         return ERROR;
     }
 
@@ -473,7 +714,6 @@ int mkdir2 (char *pathname) {
         fprintf(stderr, "!ERROR! // mkdir2 // pathname NULL\n");
         return ERROR;
     }
-    //TODO implementação
 
     /** PRIMEIRO LER ACIMA **/
 
@@ -512,13 +752,13 @@ int mkdir2 (char *pathname) {
             return ERROR;
         }
     }
-    int vacantBlock = searchBitmap2(controller->freeBlockBitmap, 0);
+    int vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
 
     unsigned char block[1024];
     memset(block, 0, sizeof(block));
     writeBlockToBlockDataSection(block, vacantBlock);
 
-    int vacantInode = searchBitmap2(controller->freeInodeBitmap, 0);
+    int vacantInode = searchBitmap2(BITMAP_INODE, 0);
 
     struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
     newInode->blocksFileSize = 1;
@@ -534,10 +774,8 @@ int mkdir2 (char *pathname) {
     memcpy(block, newInode, sizeof(newInode));
     writeBlockToInodeDataSection(block, vacantInode);
 
-    setBitmap2(controller->freeBlockBitmap, vacantBlock, 1);
-    setBitmap2(controller->freeInodeBitmap, vacantInode, 1);
-
-    //CRIAR O . E O .. para o novo diretorio TODO
+    setBitmap2(BITMAP_DADOS, vacantBlock, 1);
+    setBitmap2(BITMAP_INODE, vacantInode, 1);
 
     struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
     newRecord->TypeVal = TYPEVAL_DIRETORIO;
@@ -577,6 +815,8 @@ int mkdir2 (char *pathname) {
             return ERROR;
         }
     }
+
+    writeBlockToBlockDataSection(auxiliaryWorkingBlock, vacantBlock + dataSectionInBlocks);
 
     free(newInode);
     free(newRecord);
@@ -691,7 +931,7 @@ Entra:	pathname -> caminho do novo diretório de trabalho.
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int chdir2 (char *pathname) {
+int chdir2 (char *pathname) { //DONE
     if(checkInitialization()) {
         fprintf(stderr, "!ERROR! // chdir2 // failed initializing\n");
         return ERROR;
@@ -728,7 +968,7 @@ Entra:	pathname -> buffer para onde copiar o pathname do diretório de trabalho
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 		Em caso de erro, será retornado um valor diferente de zero.
 -----------------------------------------------------------------------------*/
-int getcwd2 (char *pathname, int size) {
+int getcwd2 (char *pathname, int size) { //DONE
     if(checkInitialization()) {
         fprintf(stderr, "!ERROR! // getcwd2 // failed initializing\n");
         return ERROR;
@@ -753,7 +993,7 @@ Entra:	pathname -> caminho do diretório a ser aberto
 Saída:	Se a operação foi realizada com sucesso, a função retorna o identificador do diretório (handle).
 	Em caso de erro, será retornado um valor negativo.
 -----------------------------------------------------------------------------*/
-DIR2 opendir2 (char *pathname) {
+DIR2 opendir2 (char *pathname) { //DONE
     if(checkInitialization()) {
         fprintf(stderr, "!ERROR! // opendir2 // failed initializing\n");
         return ERROR;
@@ -790,12 +1030,12 @@ DIR2 opendir2 (char *pathname) {
     }
 
     struct openDirectory* newOpenedDirectory = malloc(sizeof(struct openDirectory));
+    newOpenedDirectory->directoryRecord = malloc(sizeof(struct t2fs_record));
 
     getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
 
     newOpenedDirectory->valid = true;
     newOpenedDirectory->bytesFileSize = beingWorkedInode->bytesFileSize;
-    newOpenedDirectory->directoryRecord = malloc(sizeof(struct t2fs_record));
     *newOpenedDirectory->directoryRecord = *recordOfPath;
 
     openedDirectories[emptySpace] = *newOpenedDirectory;
@@ -821,7 +1061,7 @@ Entra:	handle -> identificador do diretório cujas entradas deseja-se ler.
 Saída:	Se a operação foi realizada com sucesso, a função retorna "0" (zero).
 	Em caso de erro, será retornado um valor diferente de zero ( e "dentry" não será válido)
 -----------------------------------------------------------------------------*/
-int readdir2 (DIR2 handle, DIRENT2 *dentry) {
+int readdir2 (DIR2 handle, DIRENT2 *dentry) { //DONE
     if(checkInitialization()) {
         fprintf(stderr, "!ERROR! // readdir2 // failed initializing\n");
         return ERROR;
@@ -907,11 +1147,28 @@ bool isFileHandleValid(FILE2 handle) {
     else
         return false;
 }
+
 bool isDirectoryHandleValid(DIR2 handle) {
     if (handle >= 0 && handle <= MAX_OPEN_DIRECTORIES)
         return true;
     else
         return false;
+}
+
+bool isOpenedFileStructureValid(FILE2 handle) {
+    if(!openedFiles[handle].valid || openedFiles[handle].currentPointer < 0 ||
+       openedFiles[handle].fileInode == NULL || openedFiles[handle].fileRecord == NULL) {
+        return ERROR;
+       }
+    return SUCCESS;
+}
+
+bool isOpenedDirectoryStructureValid(DIR2 handle) {
+    if(!openedDirectories[handle].valid || openedDirectories[handle].bytesFileSize < 0 ||
+       openedDirectories[handle].directoryRecord == NULL ){
+        return ERROR;
+       }
+    return SUCCESS;
 }
 
 bool checkInitialization() {

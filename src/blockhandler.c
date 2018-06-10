@@ -4,6 +4,7 @@
 
 #include "../include/initializer.h"
 #include "../include/blockhandler.h"
+#include "../include/inodehandler.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,6 +105,38 @@ bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBe
             fprintf(stderr, "!ERROR! // writeBlockToBlockDataSection // error writing sector\n");
             return ERROR;
             }
+    }
+
+    return SUCCESS;
+}
+
+bool readAdressesToDataPointerCollection (DWORD* collection, DWORD adress, int amountOfDesiredAdresses) {
+    if(collection == NULL) {
+        fprintf(stderr, "!ERROR! // readAdressesToDataPointerCollection // collection is NULL\n");
+        return ERROR;
+    }
+
+    if(adress <= 0) {
+        fprintf(stderr, "!ERROR! // readAdressesToDataPointerCollection // adress is NULL\n");
+        return ERROR;
+    }
+
+    if(amountOfDesiredAdresses <= 0) {
+        fprintf(stderr, "!ERROR! // readAdressesToDataPointerCollection // desiredAdresses is less or equal to zero\n");
+        return ERROR;
+    }
+
+    if(amountOfDesiredAdresses > 256) {
+        amountOfDesiredAdresses = 256;
+    }
+
+    readBlockToBeingWorkedBlock(adress);
+
+    int sizeOfDWORD = sizeof(DWORD);
+
+    int index;
+    for(index = 0; index < amountOfDesiredAdresses; index++) {
+        memcpy(&collection[index],&beingWorkedBlock[index*sizeOfDWORD],sizeof(DWORD));
     }
 
     return SUCCESS;

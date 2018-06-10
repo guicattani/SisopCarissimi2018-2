@@ -37,7 +37,7 @@ t_control* initializeLibrary() {
     initializeOpenedFiles();
     initializeGlobalVariables();
 
-    printDirectoryTree(0, 0);
+//    printDirectoryTree(0, 0);
     getInodeToBeingWorkedInode(0);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
@@ -47,31 +47,31 @@ t_control* initializeLibrary() {
 //    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
 //    if(status)
 //        printf("found it!!!!!");
-
-    struct t2fs_record* recordTest = findRecordOfPath("/dir1/dir12/");
-    if(recordTest)
-        printf("found it!!!!!\n");
-
-    recordTest = findRecordOfPath("../dir1/dir12/");
-    if(recordTest)
-        printf("found it!!!!!\n");
-
-    recordTest = findRecordOfPath("./dir1/dir12/");
-    if(recordTest)
-        printf("found it!!!!!\n");
+//
+//    struct t2fs_record* recordTest = findRecordOfPath("/dir1/dir12/");
+//    if(recordTest)
+//        printf("found it!!!!!\n");
+//
+//    recordTest = findRecordOfPath("../dir1/dir12/");
+//    if(recordTest)
+//        printf("found it!!!!!\n");
+//
+//    recordTest = findRecordOfPath("./dir1/dir12/");
+//    if(recordTest)
+//        printf("found it!!!!!\n");
 
 //    if(recordTest != NULL)
 //        *currentDirectory = *recordTest;
+//
+//    *currentDirectory = *recordTest;
 
-    *currentDirectory = *recordTest;
-
-    recordTest = findRecordOfPath("../dir11");
-    if(recordTest)
-        printf("found it!!!!!\n");
-
-
-    getInodeToBeingWorkedInode(5);
-    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
+//    recordTest = findRecordOfPath("../dir11");
+//    if(recordTest)
+//        printf("found it!!!!!\n");
+//
+//
+//    getInodeToBeingWorkedInode(5);
+//    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
     return controller;
 }

@@ -13,7 +13,7 @@ void printDirectoryTree();
 
 void printerOfTree(int level, int inodeNumber) ;
 
-void printSubDirectories(int level, DWORD dataPointer);
+void printSubDirectoriesContents(int level, DWORD dataPointer);
 
 struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory, int typeValOfTarget);
 

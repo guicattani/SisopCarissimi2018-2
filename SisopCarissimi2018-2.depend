@@ -169,38 +169,39 @@
 	<string.h>
 	<stdbool.h>
 
-1528467513 source:/home/aluno/SisopCarissimi2018-2/src/blockhandler.c
+1528563541 source:/home/aluno/SisopCarissimi2018-2/src/blockhandler.c
 	"../include/t2fs.h"
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
 	"../include/initializer.h"
 	"../include/blockhandler.h"
+	"../include/inodehandler.h"
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<stdbool.h>
 
-1528468225 /home/aluno/SisopCarissimi2018-2/include/t2fs.h
+1528546797 /home/aluno/SisopCarissimi2018-2/include/t2fs.h
 	<stdbool.h>
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
 
-1528292514 /home/aluno/SisopCarissimi2018-2/include/apidisk.h
+1528417436 /home/aluno/SisopCarissimi2018-2/include/apidisk.h
 
-1528292514 /home/aluno/SisopCarissimi2018-2/include/bitmap2.h
+1528417436 /home/aluno/SisopCarissimi2018-2/include/bitmap2.h
 
-1528292514 /home/aluno/SisopCarissimi2018-2/include/initializer.h
+1528417436 /home/aluno/SisopCarissimi2018-2/include/initializer.h
 	<stdbool.h>
 	"t2fs.h"
 
-1528316142 /home/aluno/SisopCarissimi2018-2/include/blockhandler.h
+1528555458 /home/aluno/SisopCarissimi2018-2/include/blockhandler.h
 	<stdbool.h>
 	"t2fs.h"
 	"initializer.h"
 
 1527861691 source:/home/aluno/SisopCarissimi2018-2/src/constructors.c
 
-1527893988 source:/home/aluno/SisopCarissimi2018-2/src/directory.c
+1528643230 source:/home/aluno/SisopCarissimi2018-2/src/directory.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -210,20 +211,20 @@
 	"../include/directory.h"
 	"../include/stringfunctions.h"
 
-1528292514 /home/aluno/SisopCarissimi2018-2/include/inodehandler.h
+1528417436 /home/aluno/SisopCarissimi2018-2/include/inodehandler.h
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
 	<stdbool.h>
 	"t2fs.h"
 
-1528464877 /home/aluno/SisopCarissimi2018-2/include/directory.h
+1528639868 /home/aluno/SisopCarissimi2018-2/include/directory.h
 	<stdbool.h>
 	"t2fs.h"
 
-1528298920 /home/aluno/SisopCarissimi2018-2/include/stringfunctions.h
+1528417436 /home/aluno/SisopCarissimi2018-2/include/stringfunctions.h
 
-1528468650 source:/home/aluno/SisopCarissimi2018-2/src/initializer.c
+1528570114 source:/home/aluno/SisopCarissimi2018-2/src/initializer.c
 	"../include/t2fs.h"
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
@@ -236,7 +237,7 @@
 	<string.h>
 	<stdbool.h>
 
-1528292514 source:/home/aluno/SisopCarissimi2018-2/src/inodehandler.c
+1528417436 source:/home/aluno/SisopCarissimi2018-2/src/inodehandler.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
@@ -245,7 +246,7 @@
 	"../include/inodehandler.h"
 	"../include/blockhandler.h"
 
-1528298974 source:/home/aluno/SisopCarissimi2018-2/src/stringfunctions.c
+1528417436 source:/home/aluno/SisopCarissimi2018-2/src/stringfunctions.c
 	<string.h>
 
 1528468285 source:/home/aluno/SisopCarissimi2018-2/src/t2fs.c

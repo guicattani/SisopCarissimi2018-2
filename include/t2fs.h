@@ -82,6 +82,7 @@ typedef struct openDirectory {
 typedef struct openFile {
     bool valid;
     int currentPointer;
+    int currentBlock;
     struct t2fs_inode*   fileInode;
     struct t2fs_record*  fileRecord;
     char name[MAX_FILE_NAME_SIZE+1];
@@ -372,4 +373,8 @@ bool isDirectoryHandleValid(DIR2 handle);
 bool checkInitialization();
 
 void printCurrentWorkingDirectory();
+
+bool isOpenedFileStructureValid(FILE2 handle);
+
+bool isOpenedDirectoryStructureValid(DIR2 handle);
 #endif

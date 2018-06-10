@@ -27,15 +27,15 @@ void printerOfTree(int level, int inodeNumber) {
     getInodeToBeingWorkedInode(inodeNumber);
 
     if(beingWorkedInode->dataPtr[0] != INVALID_PTR )
-        printSubDirectories(level ,beingWorkedInode->dataPtr[0]);
+        printSubDirectoriesContents(level ,beingWorkedInode->dataPtr[0]);
 
     if(beingWorkedInode->blocksFileSize > 1 && beingWorkedInode->dataPtr[1] != INVALID_PTR)
-        printSubDirectories(level, beingWorkedInode->dataPtr[1]);
+        printSubDirectoriesContents(level, beingWorkedInode->dataPtr[1]);
 
     if(beingWorkedInode->blocksFileSize > 2 && beingWorkedInode->singleIndPtr != INVALID_PTR ) {
         readBlockToAuxiliaryWorkingBlock(beingWorkedInode->singleIndPtr);
         for(index = 0; index < 1024/sizeof(DWORD); index++ ) {
-            printSubDirectories(level, auxiliaryWorkingBlock[index*sizeof(DWORD)]);
+            printSubDirectoriesContents(level, auxiliaryWorkingBlock[index*sizeof(DWORD)]);
         }
     }
     if(beingWorkedInode->blocksFileSize > 256 && beingWorkedInode->doubleIndPtr != INVALID_PTR ) {
@@ -45,7 +45,7 @@ void printerOfTree(int level, int inodeNumber) {
 
 }
 
-void printSubDirectories(int level, DWORD dataPointer) {
+void printSubDirectoriesContents(int level, DWORD dataPointer) {
     struct t2fs_record* records;
     records = inodeDataPointerToRecords(dataPointer);
 
@@ -69,7 +69,13 @@ void printSubDirectories(int level, DWORD dataPointer) {
                 accessedDirectories[counterForAccessedDirectories++] = records[index].inodeNumber;
                 printerOfTree(++level, records[index].inodeNumber);
                 level--;
-            }
+        }
+        else if(records[index].TypeVal == TYPEVAL_REGULAR && records[index].inodeNumber != INVALID_PTR ) {
+            for(indexTabs = 0; indexTabs < level; indexTabs++)
+                    putchar('\t');
+
+                printf("\\%s (FILE)\n", records[index].name);
+        }
     }
 
     free(records);
@@ -171,7 +177,7 @@ struct t2fs_record* findRecordOfFile(char* path) {
     struct t2fs_record* record;
 
     struct t2fs_record* returnRecord;
-    if(path[0] == '/' || path[0] != '.') {
+    if(path[0] == '/') {
         getInodeToBeingWorkedInode(rootDirectory->inodeNumber);
         record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
         returnRecord = absolutePathExists(&path[1] , record, TYPEVAL_REGULAR);
@@ -190,6 +196,19 @@ struct t2fs_record* findRecordOfFile(char* path) {
     if(returnRecord->TypeVal != TYPEVAL_REGULAR) {
         fprintf(stderr, "!ERROR! // findRecordOfPath // record is not a file\n");
         return NULL;
+    }
+
+    if( (!strcmp(returnRecord->name, ".") || !strcmp(returnRecord->name, "..") ) && returnRecord->inodeNumber != 0) {
+        char name[MAX_FILE_NAME_SIZE];
+        struct t2fs_record auxiliaryRecord;
+        auxiliaryRecord = *returnRecord;
+
+        int numberOfInode = (int) auxiliaryRecord.inodeNumber;
+        getNameOfFileByInode(numberOfInode, name);
+        strncpy(auxiliaryRecord.name, name, strlen(name)+1);
+
+        //workaround, strcpy is messing with the struct for some reason
+        returnRecord = &auxiliaryRecord;
     }
 
     return returnRecord;
@@ -318,7 +337,7 @@ struct t2fs_record* relativePathExists(char* path, struct t2fs_record* directory
     if(!position && typeValOfTarget == TYPEVAL_REGULAR) {
         records = inodeDataPointerToRecords(firstAdress);
         for(index = 0; index < 16; index++) {
-            if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
+            if(records[index].TypeVal == TYPEVAL_REGULAR && records[index].inodeNumber != INVALID_PTR ) {
                 if(!strcmp(dirBeingLookedFor, records[index].name)) {
                     return &records[index];
                 }
@@ -350,11 +369,10 @@ void getNameOfFileByInode(int inodeNumber, char* name) {
 
     int index;
     for(index = 0; index < 16; index++) {
-        if(records[index].TypeVal == TYPEVAL_DIRETORIO && records[index].inodeNumber != INVALID_PTR ) {
-            if(inodeNumber == records[index].inodeNumber) {
-                strncpy(name, records[index].name, strlen(records[index].name)+1);
-                return;
-            }
+        if(inodeNumber == records[index].inodeNumber) {
+            strncpy(name, records[index].name, strlen(records[index].name)+1);
+            return;
         }
     }
+
 }

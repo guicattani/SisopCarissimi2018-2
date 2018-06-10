@@ -13,11 +13,13 @@ unsigned char beingWorkedBlock[1024];
 unsigned char auxiliaryWorkingBlock[1024];
 
 bool readBlockToBeingWorkedBlock(int blockIndex);
+
 bool readBlockToAuxiliaryWorkingBlock(int blockIndex);
-//bool writeBeingWorkedBlockToInodesSection(int blockIndex);
-//bool writeBeingWorkedBlockToDataSection(int blockIndex);
 
 bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+
 bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+
+bool readAdressesToDataPointerCollection (DWORD* collection, DWORD adress, int amountOfDesiredAdresses);
 
 #endif
