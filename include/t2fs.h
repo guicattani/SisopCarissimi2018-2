@@ -74,6 +74,7 @@ typedef struct {
 
 typedef struct openDirectory {
     bool valid;
+    int seekPointer;
     DWORD bytesFileSize;
     struct t2fs_record* directoryRecord;
     char name[MAX_FILE_NAME_SIZE+1];
@@ -85,7 +86,6 @@ typedef struct openFile {
     int currentBlock;
     struct t2fs_inode*   fileInode;
     struct t2fs_record*  fileRecord;
-    char name[MAX_FILE_NAME_SIZE+1];
 } t_openFile;
 
 typedef struct controlStruct {
@@ -377,4 +377,6 @@ void printCurrentWorkingDirectory();
 bool isOpenedFileStructureValid(FILE2 handle);
 
 bool isOpenedDirectoryStructureValid(DIR2 handle);
+
+bool findAndAllocateBitmapsForNewFile(int* vacantBlock, int* vacantInode);
 #endif
