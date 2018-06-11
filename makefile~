@@ -16,11 +16,11 @@ SRC_DIR=./src
 
 all: blockhandler directory initializer inodehandler stringfunctions t2fs lct2fs
 
-lct2fs: $(BIN_DIR)/t2fs.o $(BIN_DIR)/apidisk.o $(BIN_DIR)/bitmap2.o
-	ar rcs $(LIB_DIR)/libt2fs.a $(BIN_DIR)/t2fs.o $(BIN_DIR)/blockhandler.o $(BIN_DIR)/directory.o $(BIN_DIR)/initializer.o $(BIN_DIR)/inodehandler.o $(BIN_DIR)/stringfunctions.o
+lct2fs: $(BIN_DIR)/t2fs.o $(LIB_DIR)/apidisk.o $(LIB_DIR)/bitmap2.o
+	ar rcs $(LIB_DIR)/libt2fs.a $(BIN_DIR)/t2fs.o $(BIN_DIR)/support.o $(BIN_DIR)/scheduler.o
 
-blockhandler: $(SRC_DIR)/blockhandler.c $(INC_DIR)/blockhandler.h $(INC_DIR)/cdata.h
-	$(CC) -c $(SRC_DIR)/blockhandler.c -o $(BIN_DIR)/blockhandler.o
+blockhandler: $(SRC_DIR)/scheduler.c $(INC_DIR)/support.h $(INC_DIR)/cdata.h
+	$(CC) -c $(SRC_DIR)/scheduler.c -o $(BIN_DIR)/scheduler.o
 
 directory: $(SRC_DIR)/scheduler.c $(INC_DIR)/support.h $(INC_DIR)/cdata.h
 	$(CC) -c $(SRC_DIR)/scheduler.c -o $(BIN_DIR)/scheduler.o
