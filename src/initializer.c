@@ -26,52 +26,34 @@ t_control* initializeLibrary() {
 
     bool errorCode;
     errorCode = bootFileSystemController();
-    if(errorCode == ERROR)
+    if(errorCode) {
+        fprintf(stderr, "!FATAL! // initializeLibrary // BOOT FAILED\n");
         return NULL;
+    }
 
-    errorCode = fillBitmaps();
-    if(errorCode == ERROR)
+    errorCode = initializeOpenedDirectories();
+    if(errorCode) {
+        fprintf(stderr, "!FATAL! // initializeLibrary // BOOT FAILED\n");
         return NULL;
+    }
 
-    initializeOpenedDirectories();
-    initializeOpenedFiles();
-    initializeGlobalVariables();
+    errorCode = initializeOpenedFiles();
+    if(errorCode) {
+        fprintf(stderr, "!FATAL! // initializeLibrary // BOOT FAILED\n");
+        return NULL;
+    }
 
-//    printDirectoryTree(0, 0);
+    errorCode = initializeGlobalVariables();
+    if(errorCode) {
+        fprintf(stderr, "!FATAL! // initializeLibrary // BOOT FAILED\n");
+        return NULL;
+    }
+
     getInodeToBeingWorkedInode(0);
     record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
     *rootDirectory = *record;
     *currentDirectory = *record;
-
-//    bool status = relativePathExists("./dir2/dir3/aaaaaadsadasdsadasdsadaa", rootDirectory);
-//    if(status)
-//        printf("found it!!!!!");
-//
-//    struct t2fs_record* recordTest = findRecordOfPath("/dir1/dir12/");
-//    if(recordTest)
-//        printf("found it!!!!!\n");
-//
-//    recordTest = findRecordOfPath("../dir1/dir12/");
-//    if(recordTest)
-//        printf("found it!!!!!\n");
-//
-//    recordTest = findRecordOfPath("./dir1/dir12/");
-//    if(recordTest)
-//        printf("found it!!!!!\n");
-
-//    if(recordTest != NULL)
-//        *currentDirectory = *recordTest;
-//
-//    *currentDirectory = *recordTest;
-
-//    recordTest = findRecordOfPath("../dir11");
-//    if(recordTest)
-//        printf("found it!!!!!\n");
-//
-//
-//    getInodeToBeingWorkedInode(5);
-//    record = inodeDataPointerGetFirstRecord(beingWorkedInode->dataPtr[0]);
 
     return controller;
 }
@@ -102,19 +84,19 @@ bool bootFileSystemController()
     index += sizeof(WORD);
     memcpy(&controller->boot.diskSize,buffer+index,sizeof(DWORD));
 
-    printf("Boot Data:\n");
-    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeBlocksBitmapSize:%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
-           controller->boot.id[0],
-           controller->boot.id[1],
-           controller->boot.id[2],
-           controller->boot.id[3],
-           controller->boot.version,
-           controller->boot.superblockSize,
-           controller->boot.freeBlocksBitmapSize,
-           controller->boot.freeInodeBitmapSize,
-           controller->boot.inodeAreaSize,
-           controller->boot.blockSize,
-           controller->boot.diskSize);
+//    printf("Boot Data:\n");
+//    printf("\tid:%c%c%c%c\n\tversion:%u\n\tsuperblockSize1:%u\n\tfreeBlocksBitmapSize:%u\n\tfreeInodeBitmapSize:%u\n\tinodeAreaSize:%u\n\tblockSize:%u\n\tdiskSize:%u\n",
+//           controller->boot.id[0],
+//           controller->boot.id[1],
+//           controller->boot.id[2],
+//           controller->boot.id[3],
+//           controller->boot.version,
+//           controller->boot.superblockSize,
+//           controller->boot.freeBlocksBitmapSize,
+//           controller->boot.freeInodeBitmapSize,
+//           controller->boot.inodeAreaSize,
+//           controller->boot.blockSize,
+//           controller->boot.diskSize);
 
     if(controller->boot.version != 32289) {
         fprintf(stderr, "!ERROR! // bootFileSystemController // file system is outdated\n");
@@ -179,12 +161,6 @@ bool initializeGlobalVariables(){
     int freeBlocksBitmapSizeInSectors = controller->boot.freeBlocksBitmapSize * blockSize;
     int freeInodesBitmapSizeInSectors = controller->boot.freeInodeBitmapSize * blockSize;
     int inodesAreaSizeInSectors       = controller->boot.inodeAreaSize * blockSize;
-//    int diskSizeInSectors             = controller->boot.diskSize * blockSize;
-//    int blocksAreaSizeInSectors       = diskSizeInSectors
-//                                    - controller->boot.superblockSize* blockSize
-//                                    - freeBlocksBitmapSizeInSectors
-//                                    - freeInodesBitmapSizeInSectors
-//                                    - inodesAreaSizeInSectors;
 
     int inodesStartSector = blockSize + freeBlocksBitmapSizeInSectors + freeInodesBitmapSizeInSectors;
     inodesStartBlock  = inodesStartSector / blockSize;

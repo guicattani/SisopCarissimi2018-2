@@ -21,6 +21,12 @@ struct t2fs_record* inodeDataPointerToRecords(DWORD dataPtr);
 
 struct t2fs_record* inodeDataPointerGetFirstRecord(DWORD dataPtr);
 
-bool inodeAppendRecord(DWORD dataPtr, struct t2fs_record* newRecord);
+bool inodeAppendRecordToBufferBlock(DWORD dataPtr, struct t2fs_record* newRecord, unsigned char bufferBlock[]);
+
+bool prepareNewRecordsBlockBuffer(unsigned char bufferBlock[]);
+
+bool inodeRemoveRecordAndReturnBufferBlock(DWORD dataPtr, char* name, unsigned char bufferBlock[]);
+
+bool inodeFillRecordsToBufferBlock(DWORD dataPtr, unsigned char bufferBlock[]);
 
 #endif

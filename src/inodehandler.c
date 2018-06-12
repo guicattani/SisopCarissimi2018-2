@@ -91,19 +91,78 @@ struct t2fs_record* inodeDataPointerGetFirstRecord(DWORD dataPtr) {
     return record;
 }
 
-bool inodeAppendRecord(DWORD dataPtr, struct t2fs_record* newRecord) {
+bool inodeAppendRecordToBufferBlock(DWORD dataPtr, struct t2fs_record* newRecord, unsigned char bufferBlock[]) {
     readBlockToAuxiliaryWorkingBlock(dataPtr);
 
     int recordSize = sizeof(struct t2fs_record);
     unsigned char buffer[recordSize];
 
+    struct t2fs_record* bufferRecord;
+
     int index;
     for(index = 0; index < 16; index++) { //1024(blockSize) divides by 64 (recordSize)
         memcpy(buffer, &auxiliaryWorkingBlock[index*recordSize], recordSize);
-        if(buffer[0] == '\0') {
-            memcpy(&auxiliaryWorkingBlock[index*recordSize], newRecord, recordSize);
+        bufferRecord = (struct t2fs_record*) buffer;
+        if(bufferRecord->TypeVal == TYPEVAL_INVALIDO) {
+            memcpy(&bufferBlock[index*recordSize], newRecord, recordSize);
             return SUCCESS;
         }
     }
     return ERROR;
+}
+
+bool prepareNewRecordsBlockBuffer(unsigned char bufferBlock[]) {
+    int recordSize = sizeof(struct t2fs_record);
+
+    struct t2fs_record* bufferRecord = malloc(sizeof(struct t2fs_record));
+
+    bufferRecord->TypeVal = TYPEVAL_INVALIDO;
+    strncpy(bufferRecord->name, "\0",1);
+    bufferRecord->inodeNumber = 0;
+
+    int index;
+    for(index = 0; index < 16; index++) { //1024(blockSize) divides by 64 (recordSize)
+        memcpy(&bufferBlock[index*recordSize], bufferRecord, recordSize);
+    }
+
+    free(bufferRecord);
+    return SUCCESS;
+}
+
+bool inodeRemoveRecordAndReturnBufferBlock(DWORD dataPtr, char* name, unsigned char bufferBlock[]) {
+    readBlockToAuxiliaryWorkingBlock(dataPtr);
+
+    int recordSize = sizeof(struct t2fs_record);
+    unsigned char buffer[recordSize];
+
+    struct t2fs_record* bufferRecord;
+
+    int index;
+    for(index = 0; index < 16; index++) { //1024(blockSize) divides by 64 (recordSize)
+        memcpy(buffer, &auxiliaryWorkingBlock[index*recordSize], recordSize);
+        bufferRecord = (struct t2fs_record*) buffer;
+        if(!strcmp(bufferRecord->name, name)) {
+            bufferRecord->TypeVal = TYPEVAL_INVALIDO;
+            memcpy(&bufferBlock[index*recordSize], bufferRecord, recordSize);
+            return SUCCESS;
+        }
+    }
+    return ERROR;
+}
+
+bool inodeFillRecordsToBufferBlock(DWORD dataPtr, unsigned char bufferBlock[]) {
+    readBlockToAuxiliaryWorkingBlock(dataPtr);
+
+    int recordSize = sizeof(struct t2fs_record);
+    unsigned char buffer[recordSize];
+
+    struct t2fs_record* bufferRecord;
+
+    int index;
+    for(index = 0; index < 16; index++) { //1024(blockSize) divides by 64 (recordSize)
+        memcpy(buffer, &auxiliaryWorkingBlock[index*recordSize], recordSize);
+        bufferRecord = (struct t2fs_record*) buffer;
+        memcpy(&bufferBlock[index*recordSize], bufferRecord, recordSize);
+        }
+    return SUCCESS;
 }

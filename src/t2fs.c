@@ -91,46 +91,20 @@ FILE2 create2 (char *filename) {
     }
     getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
+    int firstAdress = beingWorkedInode->dataPtr[0];
+    int secondAdress = beingWorkedInode->dataPtr[1];
+//    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
+//    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
 
-    struct t2fs_record* records;
-    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
-
-    int index;
-    for(index = 2; index < 16; index++) {
-        if(strcmp(records[index].name, filename)) {
-            fprintf(stderr, "!ERROR! // create2 // file already is on directory\n");
-            return ERROR;
-        }
-    }
-    int vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
-    int vacantInode = searchBitmap2(BITMAP_INODE, 0);
-
-    findAndAllocateBitmapsForNewFile(&vacantBlock, &vacantInode);
-
-    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
-    newRecord->TypeVal = 1;
-    strcpy(newRecord->name,filename);
-    newRecord->inodeNumber = vacantInode;
-
-    bool errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
-    if(errorCode) {
-        free(newRecord);
-        fprintf(stderr, "!ERROR! // create2 // error appending record\n");
+    int handle = searchVacantSpaceAndCreateFile(firstAdress, filename);
+    if(secondAdress != INVALID_PTR && handle < 0)
+        handle = searchVacantSpaceAndCreateFile(secondAdress, filename);
+    if(handle < 0)  {
+        fprintf(stderr, "!ERROR! // create2 // failed creating file not enough space in records\n");
         return ERROR;
     }
 
-    int fileHandle = open2(filename);
-    if(fileHandle == -1) {
-        fprintf(stderr, "!ERROR! // create2 // tried to open created file and failed\n");
-        return ERROR;
-    }
-
-    free(newRecord);
-    return fileHandle;
+    return handle;
 }
 
 
@@ -156,38 +130,18 @@ int delete2 (char *filename) {
 
     getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
+    int firstAdress = beingWorkedInode->dataPtr[0];
+    int secondAdress = beingWorkedInode->dataPtr[1];
+//    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
+//    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
 
-    struct t2fs_record* records;
-    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+    if(firstAdress != INVALID_PTR && !searchRecordAndRemoveFile(firstAdress, filename))
+        return SUCCESS;
+    else if(secondAdress != INVALID_PTR && !searchRecordAndRemoveFile(secondAdress, filename))
+        return SUCCESS;
 
-    int index;
-    for(index = 2; index < 16; index++) {
-        if(!strcmp(records[index].name, filename) && records[index].TypeVal == TYPEVAL_REGULAR)
-            break;
-    }
-
-    if(index == 16) {
-        fprintf(stderr, "!ERROR! // delete2 // file not found in directory\n");
-        return ERROR;
-    }
-
-    getInodeToBeingWorkedInode(records[index].inodeNumber);
-
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
-
-    setBitmap2(BITMAP_DADOS, beingWorkedInode->dataPtr[0], 0);
-    setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
-
-    records[index].TypeVal = TYPEVAL_INVALIDO;
-
-    return SUCCESS;
+    fprintf(stderr, "!ERROR! // delete2 // failed deleting file\n");
+    return ERROR;
 }
 
 
@@ -219,7 +173,7 @@ FILE2 open2 (char *filename) {
     int emptySpace = -1;
     for(index = 0; index < MAX_OPEN_FILES; index++) {
         if(openedFiles[index].valid == true) {
-            if(strcmp(filename, openedFiles[index].fileRecord->name)) {
+            if(!strcmp(filename, openedFiles[index].fileRecord->name)) {
                 fprintf(stderr, "!ERROR! // open2 // file already opened\n");
                 return ERROR;
             }
@@ -553,7 +507,7 @@ int write2 (FILE2 handle, char *buffer, int size) {
 //        }
 //    }
 //
-    return SUCCESS;
+    return ERROR;
 }
 
 
@@ -690,7 +644,7 @@ int truncate2 (FILE2 handle) {
 //        }
 //    }
 //
-    return SUCCESS;
+    return ERROR;
 }
 
 
@@ -763,79 +717,12 @@ int mkdir2 (char *pathname) {
         return ERROR;
     }
 
-    getInodeToBeingWorkedInode(recordOfParentDirectory->inodeNumber);
+    if(!makeRecordsForNewDir(recordOfParentDirectory, pathname))
+        return SUCCESS;
 
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
 
-    char newDirectoryName[59];
 
-    char* position = rstrstr(pathname, "/");
-    if(position == NULL && recordOfParentDirectory->inodeNumber != 0) {
-        fprintf(stderr, "!ERROR! // mkdir2 // pathname is invalid and isn't root\n");
-        return ERROR;
-    }
-
-    subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
-
-    struct t2fs_record* records;
-    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
-
-    int index;
-    for(index = 2; index < 16; index++) {
-        if(strcmp(records[index].name, newDirectoryName)) {
-            fprintf(stderr, "!ERROR! // mkdir2 // directory with same name is target directory\n");
-            return ERROR;
-        }
-    }
-    int vacantBlock;
-    int vacantInode;
-
-    findAndAllocateBitmapsForNewFile(&vacantInode, &vacantBlock);
-
-    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
-    newRecord->TypeVal = TYPEVAL_DIRETORIO;
-    strcpy(newRecord->name,".");
-    newRecord->inodeNumber = vacantInode;
-
-    bool errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
-    if(errorCode) {
-        free(newRecord);
-        fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
-        return ERROR;
-    }
-
-    newRecord->TypeVal = TYPEVAL_DIRETORIO;
-    strcpy(newRecord->name,"..");
-    newRecord->inodeNumber = records[0].inodeNumber;
-
-    errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
-    if(errorCode) {
-        free(newRecord);
-        fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
-        return ERROR;
-    }
-
-    for(index = 2; index < 16; index++) {
-        newRecord->TypeVal = TYPEVAL_INVALIDO;
-        strcpy(newRecord->name,"\0");
-        newRecord->inodeNumber = 0;
-
-        errorCode = inodeAppendRecord(beingWorkedInode->dataPtr[0], newRecord);
-        if(errorCode) {
-            free(newRecord);
-            fprintf(stderr, "!ERROR! // mkdir2 // error appending record\n");
-            return ERROR;
-        }
-    }
-
-    writeBlockToBlockDataSection(auxiliaryWorkingBlock, vacantBlock + dataSectionInBlocks);
-
-    free(newRecord);
-
-    return SUCCESS;
+    return ERROR;
 }
 
 
@@ -875,44 +762,17 @@ int rmdir2 (char *pathname) {
 
     getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
 
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
+    int firstAdress = beingWorkedInode->dataPtr[0];
+    int secondAdress = beingWorkedInode->dataPtr[1];
+//    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
+//    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
 
-    struct t2fs_record* records;
-    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+    if(firstAdress != INVALID_PTR  && !searchRecordAndRemoveDir(firstAdress, pathname))
+        return SUCCESS;
+    else if(secondAdress != INVALID_PTR  && !searchRecordAndRemoveDir(secondAdress, pathname))
+        return SUCCESS;
 
-    int index;
-    for(index = 2; index < 16; index++) {
-        if(&records[index] != NULL) {
-            fprintf(stderr, "!ERROR! // rmdir2 // directory not empty\n");
-            return ERROR;
-        }
-    }
-
-    struct t2fs_record* recordOfFatherDir = NULL;
-    *recordOfFatherDir = records[1];
-
-    getInodeToBeingWorkedInode(recordOfFatherDir->inodeNumber);
-    records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
-
-    char nameOfBeingDeletedDir[MAX_PATH_LENGTH];
-    getNameOfDirectoryAtEndOfPath(pathname, nameOfBeingDeletedDir);
-
-    for(index = 2; index < 16; index++) {
-        if(records[index].name == nameOfBeingDeletedDir) //directory not empty
-            break;
-    }
-
-    if(&records[index] == NULL) {
-        fprintf(stderr, "!ERROR! // rmdir2 // directory not found in parent directory\n");
-        return ERROR;
-    }
-
-    records[index].TypeVal = TYPEVAL_INVALIDO;
-
-    return SUCCESS;
+    return ERROR;
 }
 
 
@@ -996,8 +856,6 @@ DIR2 opendir2 (char *pathname) { //DONE
         return ERROR;
     }
 
-    /** TODO TESTAR! **/
-
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(pathname);
 
@@ -1032,7 +890,7 @@ DIR2 opendir2 (char *pathname) { //DONE
     getInodeToBeingWorkedInode(recordOfPath->inodeNumber);
 
     newOpenedDirectory->valid = true;
-    newOpenedDirectory->seekPointer = 2;
+    newOpenedDirectory->seekPointer = 0;
     newOpenedDirectory->bytesFileSize = beingWorkedInode->bytesFileSize;
     *newOpenedDirectory->directoryRecord = *recordOfPath;
 
@@ -1221,15 +1079,52 @@ bool findAndAllocateBitmapsForNewFile (int* vacantBlock, int* vacantInode){
     struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
     newInode->blocksFileSize = 1;
     newInode->bytesFileSize = 1;
-    newInode->dataPtr[0] = *vacantBlock + dataSectionInBlocks;
-    newInode->dataPtr[1] = 0;
-    newInode->singleIndPtr = 0;
-    newInode->doubleIndPtr = 0;
+    newInode->dataPtr[0] = *vacantBlock;
+    newInode->dataPtr[1] = INVALID_PTR;
+    newInode->singleIndPtr = INVALID_PTR;
+    newInode->doubleIndPtr = INVALID_PTR;
     newInode->reservado[0] = 0;
     newInode->reservado[1] = 0;
 
     memset(block, 0, sizeof(block));
     memcpy(block, newInode, sizeof(newInode));
+    if(writeBlockToInodeDataSection(block, *vacantInode + inodesStartBlock)) {
+        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing inode block\n");
+        return ERROR;
+    }
+
+    setBitmap2(BITMAP_DADOS, *vacantBlock, 1);
+    setBitmap2(BITMAP_INODE, *vacantInode, 1);
+
+    free(newInode);
+
+    return SUCCESS;
+}
+
+bool findAndAllocateBitmapsForNewDirectory (int* vacantBlock, int* vacantInode){
+    *vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
+
+    unsigned char block[1024];
+    memset(block, 0, sizeof(block));
+    if(writeBlockToBlockDataSection(block, *vacantBlock)){
+        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing data block\n");
+        return ERROR;
+    }
+
+    *vacantInode = searchBitmap2(BITMAP_INODE, 0);
+
+    struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
+    newInode->blocksFileSize = 1;
+    newInode->bytesFileSize = 1024;
+    newInode->dataPtr[0] = *vacantBlock;
+    newInode->dataPtr[1] = INVALID_PTR;
+    newInode->singleIndPtr = INVALID_PTR;
+    newInode->doubleIndPtr = INVALID_PTR;
+    newInode->reservado[0] = 0;
+    newInode->reservado[1] = 0;
+
+    memset(block, 0, sizeof(block));
+    memcpy(block, newInode, sizeof(struct t2fs_inode));
     if(writeBlockToInodeDataSection(block, *vacantInode)) {
         fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing inode block\n");
         return ERROR;
@@ -1239,6 +1134,295 @@ bool findAndAllocateBitmapsForNewFile (int* vacantBlock, int* vacantInode){
     setBitmap2(BITMAP_INODE, *vacantInode, 1);
 
     free(newInode);
+
+    return SUCCESS;
+}
+
+bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(dataPointer);
+
+    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
+        return ERROR; //TODO
+    if(beingWorkedInode->blocksFileSize > 2)
+        return ERROR; //TODO
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(records[index].TypeVal != TYPEVAL_INVALIDO) {
+            fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // directory not empty\n");
+            return ERROR;
+        }
+    }
+
+    int adressPointer = -1;
+
+    char nameOfBeingDeletedDir[MAX_PATH_LENGTH];
+    getNameOfDirectoryAtEndOfPath(pathname, nameOfBeingDeletedDir);
+
+    struct t2fs_record* recordOfFatherDir = malloc(sizeof(struct t2fs_record));
+    *recordOfFatherDir = records[1];
+
+    getInodeToBeingWorkedInode(recordOfFatherDir->inodeNumber);
+    DWORD firstAdress = beingWorkedInode->dataPtr[0];
+    DWORD secondAdress = beingWorkedInode->dataPtr[1];
+
+    records = inodeDataPointerToRecords(firstAdress);
+
+
+    for(index = 2; index < 16; index++) {
+        if(!strcmp(records[index].name,nameOfBeingDeletedDir)){
+            adressPointer = firstAdress;
+            break;
+        }
+    }
+
+    if(&records[index] == NULL) {
+        records = inodeDataPointerToRecords(secondAdress);
+        for(index = 2; index < 16; index++) {
+            if(!strcmp(records[index].name,nameOfBeingDeletedDir)){
+                adressPointer = secondAdress;
+                break;
+            }
+        }
+    }
+
+    if(&records[index] == NULL) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // directory not found in parent directory\n");
+        free(recordOfFatherDir);
+        return ERROR;
+    }
+
+    unsigned char bufferBlock[1024];
+    inodeFillRecordsToBufferBlock(adressPointer, bufferBlock);
+    inodeRemoveRecordAndReturnBufferBlock(adressPointer, nameOfBeingDeletedDir, bufferBlock);
+
+    if(writeBlockToBlockDataSection(bufferBlock, adressPointer)) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveFile // failed to write updated block\n");
+        free(recordOfFatherDir);
+        return ERROR;
+    }
+
+    getInodeToBeingWorkedInode(records[index].inodeNumber);
+    setBitmap2(BITMAP_DADOS, adressPointer, 0);
+    setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
+
+    free(recordOfFatherDir);
+    return SUCCESS;
+}
+
+bool searchRecordAndRemoveFile(DWORD dataPointer, char* filename) {
+    if(dataPointer == 0 || filename == NULL) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveFile // invalid arguments\n");
+        return ERROR;
+    }
+
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(dataPointer);
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(!strcmp(records[index].name, filename) && records[index].TypeVal == TYPEVAL_REGULAR)
+            break;
+    }
+
+    if(index >= 16) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveFile // file not found in directory\n");
+        return ERROR;
+    }
+
+    unsigned char bufferBlock[1024];
+    inodeFillRecordsToBufferBlock(dataPointer, bufferBlock);
+    inodeRemoveRecordAndReturnBufferBlock(dataPointer, filename, bufferBlock);
+
+    if(writeBlockToBlockDataSection(bufferBlock, dataPointer)) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveFile // failed to write updated block\n");
+        return ERROR;
+    }
+
+    getInodeToBeingWorkedInode(records[index].inodeNumber);
+    setBitmap2(BITMAP_DADOS, beingWorkedInode->dataPtr[0], 0);
+    setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
+
+    return SUCCESS;
+}
+
+
+int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename) {
+    struct t2fs_record* records;
+    records = inodeDataPointerToRecords(dataPointer);
+
+    int index;
+    for(index = 2; index < 16; index++) {
+        if(records[index].TypeVal != TYPEVAL_INVALIDO && !strcmp(records[index].name, filename)) {
+            fprintf(stderr, "!ERROR! // searchVacantSpaceAndCreateFile // file already is on directory\n");
+            return ERROR;
+        }
+    }
+    int vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
+    int vacantInode = searchBitmap2(BITMAP_INODE, 0);
+
+    findAndAllocateBitmapsForNewFile(&vacantBlock, &vacantInode);
+
+    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
+    newRecord->TypeVal = 1;
+    strcpy(newRecord->name,filename);
+    newRecord->inodeNumber = vacantInode;
+
+    unsigned char bufferBlock[1024];
+    inodeFillRecordsToBufferBlock(dataPointer, bufferBlock);
+
+    bool errorCode = inodeAppendRecordToBufferBlock(dataPointer, newRecord, bufferBlock);
+    if(errorCode) {
+        free(newRecord);
+        fprintf(stderr, "!ERROR! // searchVacantSpaceAndCreateFile // error appending record\n");
+        return ERROR;
+    }
+
+    writeBlockToBlockDataSection(bufferBlock, dataPointer);
+
+    memset(bufferBlock, 0 ,sizeof(bufferBlock));
+    struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
+    newInode->blocksFileSize = 1;
+    newInode->bytesFileSize = 0;
+    newInode->dataPtr[0] = vacantBlock;
+    newInode->dataPtr[1] = INVALID_PTR;
+    newInode->singleIndPtr = INVALID_PTR;
+    newInode->doubleIndPtr = INVALID_PTR;
+
+    memcpy(bufferBlock, newInode, sizeof(newInode));
+    writeBlockToBlockDataSection(bufferBlock, vacantInode);
+
+    free(newRecord);
+
+    int fileHandle = open2(filename);
+    if(fileHandle == -1) {
+        fprintf(stderr, "!ERROR! // searchVacantSpaceAndCreateFile // tried to open created file and failed\n");
+        return ERROR;
+    }
+
+    return fileHandle;
+}
+
+bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pathname) {
+    char newDirectoryName[59];
+
+    char* position = rstrstr(pathname, "/");
+    if(position == NULL && recordOfParentDirectory->inodeNumber != 0) {
+        fprintf(stderr, "!ERROR! // makeRecordsForNewDir // pathname is invalid and isn't root\n");
+        return ERROR;
+    }
+
+    subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
+
+    struct t2fs_record* records;
+    getInodeToBeingWorkedInode(recordOfParentDirectory->inodeNumber);
+
+    int firstAdress = beingWorkedInode->dataPtr[0];
+    int secondAdress = beingWorkedInode->dataPtr[1];
+//    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
+//    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
+
+    bool vacancyInFirstAdress = false;
+
+    int index;
+    if(firstAdress != INVALID_PTR) {
+        records = inodeDataPointerToRecords(firstAdress);
+
+        for(index = 2; index < 16; index++) {
+            if(!strcmp(records[index].name, newDirectoryName)) {
+                fprintf(stderr, "!ERROR! // makeRecordsForNewDir // directory with same name is target directory\n");
+                return ERROR;
+            }
+            if(records[index].TypeVal == TYPEVAL_INVALIDO && !vacancyInFirstAdress)
+                vacancyInFirstAdress = true;
+        }
+    }
+
+    if(secondAdress != INVALID_PTR) {
+        records = inodeDataPointerToRecords(firstAdress);
+
+        for(index = 2; index < 16; index++) {
+            if(!strcmp(records[index].name, newDirectoryName)) {
+                fprintf(stderr, "!ERROR! // makeRecordsForNewDir // directory with same name is target directory\n");
+                return ERROR;
+            }
+        }
+
+    }
+
+    int vacantBlock;
+    int vacantInode;
+
+    findAndAllocateBitmapsForNewDirectory(&vacantBlock, &vacantInode);
+    unsigned char bufferBlock[1024];
+    prepareNewRecordsBlockBuffer(bufferBlock);
+    writeBlockToBlockDataSection(bufferBlock, vacantBlock);
+
+    struct t2fs_record* newRecord = malloc(sizeof(struct t2fs_record));
+    newRecord->TypeVal = TYPEVAL_DIRETORIO;
+    strncpy(newRecord->name,".\0", 2);
+    newRecord->inodeNumber = vacantInode;
+
+    bool errorCode = inodeAppendRecordToBufferBlock(vacantBlock, newRecord, bufferBlock);
+    if(errorCode) {
+        free(newRecord);
+        fprintf(stderr, "!ERROR! // makeRecordsForNewDir // error appending record\n");
+        return ERROR;
+    }
+
+    writeBlockToBlockDataSection(bufferBlock, vacantBlock);
+
+    newRecord->TypeVal = TYPEVAL_DIRETORIO;
+    strncpy(newRecord->name,"..\0",3);
+    newRecord->inodeNumber = records[0].inodeNumber;
+
+    errorCode = inodeAppendRecordToBufferBlock(vacantBlock, newRecord, bufferBlock);
+
+    if(errorCode) {
+        free(newRecord);
+        fprintf(stderr, "!ERROR! // makeRecordsForNewDir // error appending record\n");
+        return ERROR;
+    }
+
+    writeBlockToBlockDataSection(bufferBlock, vacantBlock);
+
+    char nameOfDesiredDir[MAX_FILE_NAME_SIZE];
+
+    getNameOfDirectoryAtEndOfPath(pathname, nameOfDesiredDir);
+
+    newRecord->TypeVal = TYPEVAL_DIRETORIO;
+    strncpy(newRecord->name,nameOfDesiredDir,strlen(nameOfDesiredDir)+1);
+    newRecord->inodeNumber = vacantInode;
+
+    int dataPointer = -1;
+    memset(bufferBlock, 0, sizeof(bufferBlock));
+    if(vacancyInFirstAdress) {
+        inodeFillRecordsToBufferBlock(firstAdress, bufferBlock);
+        errorCode = inodeAppendRecordToBufferBlock(firstAdress, newRecord, bufferBlock);
+        dataPointer = firstAdress;
+    }
+    else {
+        inodeFillRecordsToBufferBlock(secondAdress, bufferBlock);
+        errorCode = inodeAppendRecordToBufferBlock(secondAdress, newRecord, bufferBlock);
+        dataPointer = secondAdress;
+    }
+
+    if(errorCode) {
+        free(newRecord);
+        fprintf(stderr, "!ERROR! // makeRecordsForNewDir // error appending record\n");
+        return ERROR;
+    }
+
+    if(writeBlockToBlockDataSection(bufferBlock, dataPointer)) {
+        fprintf(stderr, "!ERROR! // makeRecordsForNewDir // failed to write updated block\n");
+        return ERROR;
+    }
+
+    setBitmap2(BITMAP_DADOS, vacantBlock, 1);
+    setBitmap2(BITMAP_INODE, vacantInode, 1);
+
+    free(newRecord);
 
     return SUCCESS;
 }

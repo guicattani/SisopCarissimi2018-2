@@ -9,8 +9,8 @@
 
 #define	INVALID_PTR	-1
 
-#define SIZEIDENTIFY 67
-#define GROUPNAMESTRING "Guilherme Cattani 243589"
+#define SIZEIDENTIFY 45
+#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887"
 
 #define MAX_OPEN_FILES 10
 #define MAX_OPEN_DIRECTORIES 10
@@ -379,4 +379,14 @@ bool isOpenedFileStructureValid(FILE2 handle);
 bool isOpenedDirectoryStructureValid(DIR2 handle);
 
 bool findAndAllocateBitmapsForNewFile(int* vacantBlock, int* vacantInode);
+
+bool findAndAllocateBitmapsForNewDirectory(int* vacantBlock, int* vacantInode);
+
+bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname);
+
+bool searchRecordAndRemoveFile(DWORD dataPointer, char* filename);
+
+int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename);
+
+bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pathname);
 #endif

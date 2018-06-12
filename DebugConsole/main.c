@@ -15,18 +15,19 @@ int main()
     }
 
     printDirectoryTree();
-//
-//    printCurrentWorkingDirectory();
-//    chdir2("./");
-//    printCurrentWorkingDirectory();
-//    chdir2("../");
-//    printCurrentWorkingDirectory();
-//
-//    chdir2("dir11/");
-//    printCurrentWorkingDirectory();
-//
-//    chdir2("/");
-//    printCurrentWorkingDirectory();
+
+    printCurrentWorkingDirectory();
+    chdir2("./");
+    printCurrentWorkingDirectory();
+    chdir2("../");
+    printCurrentWorkingDirectory();
+
+    chdir2("dir1/");
+    printCurrentWorkingDirectory();
+    chdir2("GLABHERGHARBLE/");
+
+    chdir2("../");
+    printCurrentWorkingDirectory();
 
     opendir2("./dir1");
     closedir2(0);
@@ -36,6 +37,23 @@ int main()
     open2("file3");
     char buffer[1024];
     read2(0,buffer,1024);
+
+    printf("buffer: %s\n", buffer);
+
+    create2("pipi");
+    delete2("pipi");
+
+    mkdir2("/dir666");
+    delete2("file3");
+
+    chdir2("./dir2/dir21/");
+    printCurrentWorkingDirectory();
+
+    delete2("file211");
+
+    chdir2("../");
+
+    rmdir2("dir21");
 
     printf("Nome do grupo:\n%s\n", groupName);
 

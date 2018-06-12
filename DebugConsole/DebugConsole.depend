@@ -27,22 +27,22 @@
 
 1477956428 /home/aluno/Trabalho2 0106/include/bitmap2.h
 
-1528643770 source:/home/aluno/SisopCarissimi2018-2/DebugConsole/main.c
+1528773352 source:/home/aluno/SisopCarissimi2018-2/DebugConsole/main.c
 	<stdio.h>
 	<stdlib.h>
 	"../include/t2fs.h"
 	"../include/directory.h"
 
-1528546797 /home/aluno/SisopCarissimi2018-2/include/t2fs.h
+1528770584 /home/aluno/SisopCarissimi2018-2/include/t2fs.h
 	<stdbool.h>
 	"../include/apidisk.h"
 	"../include/bitmap2.h"
 
-1528417436 /home/aluno/SisopCarissimi2018-2/include/apidisk.h
+1528712175 /home/aluno/SisopCarissimi2018-2/include/apidisk.h
 
-1528417436 /home/aluno/SisopCarissimi2018-2/include/bitmap2.h
+1528712175 /home/aluno/SisopCarissimi2018-2/include/bitmap2.h
 
-1528639868 /home/aluno/SisopCarissimi2018-2/include/directory.h
+1528712175 /home/aluno/SisopCarissimi2018-2/include/directory.h
 	<stdbool.h>
 	"t2fs.h"
 

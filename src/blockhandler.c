@@ -81,6 +81,11 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
 
 
 bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
+    if(blockToBeWrittenIndex < inodesStartBlock) {
+        fprintf(stderr, "!ERROR! // writeBlockToInodeDataSection // invalid arguments tried to write in boot\n");
+        return ERROR;
+    }
+
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {
@@ -101,7 +106,7 @@ bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBe
     for(index = 0; index < 4; index++) {
         memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
-        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 ) {
+        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + index, buffer) != 0 ) {
             fprintf(stderr, "!ERROR! // writeBlockToBlockDataSection // error writing sector\n");
             return ERROR;
             }
