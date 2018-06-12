@@ -27,4 +27,5 @@ bool fillBitmaps();
 bool initializeOpenedDirectories();
 bool initializeOpenedFiles();
 bool initializeGlobalVariables();
+bool unintializeLibrary();
 #endif

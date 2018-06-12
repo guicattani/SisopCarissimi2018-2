@@ -81,10 +81,6 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
 
 
 bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
-    if(blockToBeWrittenIndex < inodesStartBlock) {
-        fprintf(stderr, "!ERROR! // writeBlockToInodeDataSection // invalid arguments tried to write in boot\n");
-        return ERROR;
-    }
 
     unsigned char buffer[SECTOR_SIZE];
     int index;
@@ -101,6 +97,11 @@ bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBe
 }
 
 bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
+        if(blockToBeWrittenIndex < inodesStartBlock) {
+        fprintf(stderr, "!ERROR! // writeBlockToInodeDataSection // invalid arguments tried to write in boot\n");
+        return ERROR;
+    }
+
     unsigned char buffer[SECTOR_SIZE];
     int index;
     for(index = 0; index < 4; index++) {

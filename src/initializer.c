@@ -18,8 +18,6 @@ t_control* initializeLibrary() {
     controller = malloc(sizeof(t_control));
     rootDirectory =  malloc(sizeof(struct t2fs_record));
     currentDirectory = malloc(sizeof(struct t2fs_record));
-
-    beingWorkedRecord = malloc(sizeof(struct t2fs_record));
     beingWorkedInode = malloc(sizeof(struct t2fs_inode));
 
     struct t2fs_record* record;
@@ -173,3 +171,10 @@ bool initializeGlobalVariables(){
     return SUCCESS;
 }
 
+bool unintializeLibrary() {
+    free(controller);
+    free(rootDirectory);
+    free(currentDirectory);
+
+    return SUCCESS;
+}

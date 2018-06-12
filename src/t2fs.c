@@ -550,28 +550,18 @@ int truncate2 (FILE2 handle) {
 //    int bytesRemainderOfBlocksToBeRead = size - completeBlocksToBeRead*1024 - bytesToBeReadFromCurrentBlock;
 //
 //    if(openedFiles[handle].currentBlock == 0) {
-//        char blockFilledWithZeroes[1024];
-//        memset(blockFilledWithZeroes, 0, sizeof(blockFilledWithZeroes));
-//        memcpy(blockFilledWithZeroes, beingWorkedBlock, currentPointer);
+//        char bufferBlock[1024];
+//        memset(bufferBlock, 0, sizeof(bufferBlock));
+//        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
+//        memcpy(bufferBlock, beingWorkedBlock, currentPointer);
 //
-//        memcpy(beingWorkedBlock, blockFilledWithZeroes, sizeof(beingWorkedBlock));
-//        writeBlockToBlockDataSection(beingWorkedBlock,openedFiles[handle].fileInode->dataPtr[0]);
+//        writeBlockToBlockDataSection(bufferBlock,openedFiles[handle].fileInode->dataPtr[0]);
 //
 //        openedFiles[handle].currentPointer--; //pointer at end of file
 //        openedFiles[handle].fileInode->bytesFileSize = openedFiles[handle].currentPointer;
-//
-//        if(beingWorkedBlock,openedFiles[handle].fileInode->dataPtr[1] != INVALID_PTR) {
-//
-//        }
-//        if(beingWorkedBlock,openedFiles[handle].fileInode->singleIndPtr != INVALID_PTR) {
-//
-//        }
-//        if(beingWorkedBlock,openedFiles[handle].fileInode->doubleIndPtr != INVALID_PTR) {
-//            // STOPPED HERE
-//        }
 //    }
 //
-//    if(openedFiles[handle].currentBlock == 0) {
+//    if(openedFiles[handle].currentBlock == 1) {
 //
 //        if(size - currentPositionOfBuffer > 1024)
 //            bytesToBeReadFromCurrentBlock = 1024;
@@ -643,7 +633,7 @@ int truncate2 (FILE2 handle) {
 //            index++;
 //        }
 //    }
-//
+
     return ERROR;
 }
 
@@ -1426,3 +1416,4 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
 
     return SUCCESS;
 }
+
