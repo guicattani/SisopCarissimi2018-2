@@ -389,4 +389,5 @@ bool searchRecordAndRemoveFile(DWORD dataPointer, char* filename);
 int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename);
 
 bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pathname);
+
 #endif

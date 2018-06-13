@@ -129,6 +129,19 @@ struct t2fs_record* absolutePathExists(char* path, struct t2fs_record* directory
 struct t2fs_record* findRecordOfPath(char* path) {
     if(rootDirectory == NULL || currentDirectory == NULL)
         return NULL;
+    if(!strcmp(path, ".")) {
+        return currentDirectory;
+    }
+    if(!strcmp(path, "..")) {
+        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+        struct t2fs_record* record;
+        record = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+
+        if(!strcmp(record[1].name, "..") )
+            return &record[1];
+        else
+            return NULL;
+    }
 
     struct t2fs_record* record;
 

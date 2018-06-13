@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <math.h>
 
 bool initialized = false;
 
@@ -289,7 +288,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
     else
         bytesToBeReadFromCurrentBlock = size;
 
-    int completeBlocksToBeRead =  floor((size - bytesLeftInCurrentBlock)/1024);
+    int completeBlocksToBeRead =  (int)((size - bytesLeftInCurrentBlock)/1024);
     int bytesRemainderOfBlocksToBeRead = size - completeBlocksToBeRead*1024 - bytesToBeReadFromCurrentBlock;
 
     if(openedFiles[handle].currentBlock == 0) {
@@ -299,7 +298,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
         currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
         openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
-        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+        openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
     }
 
     if(openedFiles[handle].currentBlock == 1) {
@@ -315,7 +314,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
         currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
         openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
-        openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+        openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
     }
 
     if(openedFiles[handle].currentBlock > 1 && openedFiles[handle].currentBlock < 258) { //256 indirects 2 directs
@@ -338,7 +337,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
             currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
             openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
-            openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+            openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
 
             index++;
             completeBlocksToBeRead--;
@@ -366,7 +365,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
                 currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
                 openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
-                openedFiles[handle].currentBlock = (int) floor(openedFiles[handle].currentPointer / 1024);
+                openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
 
                 secondIndex++;
                 completeBlocksToBeRead--;
@@ -921,6 +920,7 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) { //DONE
     struct t2fs_record* records;
     int seekPointer = openedDirectories[handle].seekPointer;
 
+    getInodeToBeingWorkedInode(openedDirectories[handle].directoryRecord->inodeNumber);
     if(seekPointer <= 16)
         records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
     else if(seekPointer > 16 && seekPointer <= 32)
@@ -930,19 +930,18 @@ int readdir2 (DIR2 handle, DIRENT2 *dentry) { //DONE
     else if(seekPointer > 256)
         return ERROR;
 
-    if(records[seekPointer].TypeVal != TYPEVAL_REGULAR ||
+    if(records[seekPointer].TypeVal != TYPEVAL_REGULAR &&
        records[seekPointer].TypeVal != TYPEVAL_DIRETORIO) {
-        fprintf(stderr, "!ERROR! // readdir2 // seek pointer is pointing to irregular record\n");
         return ERROR;
     }
 
     dentry->fileType = records[seekPointer].TypeVal;
-    strncpy(dentry->name, records[seekPointer].name, strlen(records[seekPointer].name));
+    strncpy(dentry->name, records[seekPointer].name, strlen(records[seekPointer].name)+1);
 
     getInodeToBeingWorkedInode(records[seekPointer].inodeNumber);
     dentry->fileSize = beingWorkedInode->bytesFileSize;
 
-    seekPointer++;
+    openedDirectories[handle].seekPointer++;
 
     return SUCCESS;
 }
@@ -1076,10 +1075,8 @@ bool findAndAllocateBitmapsForNewFile (int* vacantBlock, int* vacantInode){
     newInode->reservado[0] = 0;
     newInode->reservado[1] = 0;
 
-    memset(block, 0, sizeof(block));
-    memcpy(block, newInode, sizeof(newInode));
-    if(writeBlockToInodeDataSection(block, *vacantInode + inodesStartBlock)) {
-        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing inode block\n");
+    if(writeInodeToInodeDataSection(newInode, *vacantInode)) {
+        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing inode line\n");
         return ERROR;
     }
 
@@ -1097,7 +1094,7 @@ bool findAndAllocateBitmapsForNewDirectory (int* vacantBlock, int* vacantInode){
     unsigned char block[1024];
     memset(block, 0, sizeof(block));
     if(writeBlockToBlockDataSection(block, *vacantBlock)){
-        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing data block\n");
+        fprintf(stderr, "!ERROR! // findAndAllocateBitmapsForNewDirectory // failed writing data block\n");
         return ERROR;
     }
 
@@ -1113,10 +1110,8 @@ bool findAndAllocateBitmapsForNewDirectory (int* vacantBlock, int* vacantInode){
     newInode->reservado[0] = 0;
     newInode->reservado[1] = 0;
 
-    memset(block, 0, sizeof(block));
-    memcpy(block, newInode, sizeof(struct t2fs_inode));
-    if(writeBlockToInodeDataSection(block, *vacantInode)) {
-        fprintf(stderr, "!ERROR! // findBitmapsForNewFile // failed writing inode block\n");
+    if(writeInodeToInodeDataSection(newInode, *vacantInode)) {
+        fprintf(stderr, "!ERROR! // findAndAllocateBitmapsForNewDirectory // failed writing inode line\n");
         return ERROR;
     }
 
@@ -1131,11 +1126,6 @@ bool findAndAllocateBitmapsForNewDirectory (int* vacantBlock, int* vacantInode){
 bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
     struct t2fs_record* records;
     records = inodeDataPointerToRecords(dataPointer);
-
-    if(beingWorkedInode->blocksFileSize > 1) //usa dataptr[1]
-        return ERROR; //TODO
-    if(beingWorkedInode->blocksFileSize > 2)
-        return ERROR; //TODO
 
     int index;
     for(index = 2; index < 16; index++) {
@@ -1153,12 +1143,18 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
     struct t2fs_record* recordOfFatherDir = malloc(sizeof(struct t2fs_record));
     *recordOfFatherDir = records[1];
 
+    if(recordOfFatherDir == NULL || recordOfFatherDir->TypeVal != TYPEVAL_DIRETORIO){
+            fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // record of father dir wasn't found\n");
+            free(recordOfFatherDir);
+            return ERROR;
+    }
+
+
     getInodeToBeingWorkedInode(recordOfFatherDir->inodeNumber);
     DWORD firstAdress = beingWorkedInode->dataPtr[0];
     DWORD secondAdress = beingWorkedInode->dataPtr[1];
 
     records = inodeDataPointerToRecords(firstAdress);
-
 
     for(index = 2; index < 16; index++) {
         if(!strcmp(records[index].name,nameOfBeingDeletedDir)){
@@ -1177,6 +1173,13 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
         }
     }
 
+    if(adressPointer < 0){
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // adressPointer is negative \n");
+        free(recordOfFatherDir);
+        return ERROR;
+    }
+
+
     if(&records[index] == NULL) {
         fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // directory not found in parent directory\n");
         free(recordOfFatherDir);
@@ -1193,7 +1196,6 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
         return ERROR;
     }
 
-    getInodeToBeingWorkedInode(records[index].inodeNumber);
     setBitmap2(BITMAP_DADOS, adressPointer, 0);
     setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
 
@@ -1249,8 +1251,8 @@ int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename) {
             return ERROR;
         }
     }
-    int vacantBlock = searchBitmap2(BITMAP_DADOS, 0);
-    int vacantInode = searchBitmap2(BITMAP_INODE, 0);
+    int vacantBlock;
+    int vacantInode;
 
     findAndAllocateBitmapsForNewFile(&vacantBlock, &vacantInode);
 
@@ -1270,18 +1272,6 @@ int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename) {
     }
 
     writeBlockToBlockDataSection(bufferBlock, dataPointer);
-
-    memset(bufferBlock, 0 ,sizeof(bufferBlock));
-    struct t2fs_inode* newInode = malloc(sizeof(struct t2fs_inode));
-    newInode->blocksFileSize = 1;
-    newInode->bytesFileSize = 0;
-    newInode->dataPtr[0] = vacantBlock;
-    newInode->dataPtr[1] = INVALID_PTR;
-    newInode->singleIndPtr = INVALID_PTR;
-    newInode->doubleIndPtr = INVALID_PTR;
-
-    memcpy(bufferBlock, newInode, sizeof(newInode));
-    writeBlockToBlockDataSection(bufferBlock, vacantInode);
 
     free(newRecord);
 
@@ -1303,7 +1293,15 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
         return ERROR;
     }
 
-    subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
+    if(position == pathname){
+        strncpy(newDirectoryName, pathname+1, strlen(pathname));
+    }
+    else if(position == NULL) {
+        strncpy(newDirectoryName, pathname, strlen(pathname));
+    }
+    else{
+        subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);
+    }
 
     struct t2fs_record* records;
     getInodeToBeingWorkedInode(recordOfParentDirectory->inodeNumber);
@@ -1377,12 +1375,8 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
 
     writeBlockToBlockDataSection(bufferBlock, vacantBlock);
 
-    char nameOfDesiredDir[MAX_FILE_NAME_SIZE];
-
-    getNameOfDirectoryAtEndOfPath(pathname, nameOfDesiredDir);
-
     newRecord->TypeVal = TYPEVAL_DIRETORIO;
-    strncpy(newRecord->name,nameOfDesiredDir,strlen(nameOfDesiredDir)+1);
+    strncpy(newRecord->name,newDirectoryName,strlen(newDirectoryName)+1);
     newRecord->inodeNumber = vacantInode;
 
     int dataPointer = -1;
@@ -1416,4 +1410,3 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
 
     return SUCCESS;
 }
-

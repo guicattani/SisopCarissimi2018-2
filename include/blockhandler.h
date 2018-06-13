@@ -16,9 +16,9 @@ bool readBlockToBeingWorkedBlock(int blockIndex);
 
 bool readBlockToAuxiliaryWorkingBlock(int blockIndex);
 
-bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+bool writeInodeToInodeDataSection(struct t2fs_inode* inode, int inodeIndex);
 
-bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
+bool writeBlockToBlockDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex);
 
 bool readAdressesToDataPointerCollection (DWORD* collection, DWORD adress, int amountOfDesiredAdresses);
 

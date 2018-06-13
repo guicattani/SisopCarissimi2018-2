@@ -80,14 +80,24 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
 //}
 
 
-bool writeBlockToInodeDataSection(unsigned char* blockToBeWritten, int blockToBeWrittenIndex) {
+bool writeInodeToInodeDataSection(struct t2fs_inode* inode, int inodeIndex) {
 
-    unsigned char buffer[SECTOR_SIZE];
+    int inodeStructSize = sizeof(struct t2fs_inode);
+    unsigned char buffer[inodeStructSize];
+    unsigned char bufferSector[SECTOR_SIZE];
+    unsigned char bufferOfInodes[1024];
     int index;
-    for(index = 0; index < 4; index++) {
-        memcpy(&buffer, &blockToBeWritten[index*SECTOR_SIZE], sizeof(buffer));
 
-        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 ) {
+    memcpy(&buffer,inode, inodeStructSize);
+
+    readBlockToBeingWorkedBlock(inodesStartBlock);
+    memcpy(&bufferOfInodes, beingWorkedBlock, 1024);
+    memcpy(&bufferOfInodes[inodeIndex*inodeStructSize], buffer, inodeStructSize);
+
+    for(index = 0; index < 4; index++) {
+        memcpy(&bufferSector, &bufferOfInodes[SECTOR_SIZE*index], SECTOR_SIZE);
+
+        if(write_sector(inodesStartBlock * controller->boot.blockSize + index, bufferSector) != 0 ) {
             fprintf(stderr, "!ERROR! // writeBlockToInodeDataSection // error writing sector\n");
             return ERROR;
         }
