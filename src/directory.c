@@ -291,11 +291,11 @@ bool getNameOfDirectoryAtEndOfPath(char* path, char* name) {
 
     position = rstrstr(path, "/");
     if(position == path){
-        strncpy(name, path+1, strlen(path));
+        strncpy(name, path+1, strlen(path)+1);
         return SUCCESS;
     }
     if(position == NULL) {
-        strncpy(name, path, strlen(path));
+        strncpy(name, path, strlen(path)+1);
         return SUCCESS;
     }
 

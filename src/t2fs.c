@@ -126,6 +126,15 @@ int delete2 (char *filename) {
         fprintf(stderr, "!ERROR! // delete2 // filename is NULL\n");
         return ERROR;
     }
+    int index;
+    for(index = 0; index < MAX_OPEN_FILES; index++) {
+        if(openedFiles[index].valid && !strcmp(filename, openedFiles[index].fileRecord->name)) {
+            fprintf(stderr, "!WARNING! // delete2 // file opened\n");
+            close2(index);
+            break;
+        }
+
+    }
 
     getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
 
@@ -172,7 +181,7 @@ FILE2 open2 (char *filename) {
     int emptySpace = -1;
     for(index = 0; index < MAX_OPEN_FILES; index++) {
         if(openedFiles[index].valid == true) {
-            if(!strcmp(filename, openedFiles[index].fileRecord->name)) {
+            if(openedFiles[index].valid && !strcmp(filename, openedFiles[index].fileRecord->name)) {
                 fprintf(stderr, "!ERROR! // open2 // file already opened\n");
                 return ERROR;
             }
@@ -742,6 +751,24 @@ int rmdir2 (char *pathname) {
         return ERROR;
     }
 
+    int index;
+
+    char nameOfDir[MAX_FILE_NAME_SIZE];
+    char nameOfDirRecord[MAX_FILE_NAME_SIZE];
+    getNameOfDirectoryAtEndOfPath(pathname, nameOfDir);
+
+
+    for(index = 0; index < MAX_OPEN_DIRECTORIES; index++) {
+        if(openedDirectories[index].valid) {
+            getNameOfFileByInode(openedDirectories[index].directoryRecord->inodeNumber, nameOfDirRecord);
+            if(openedDirectories[index].valid && !strcmp(nameOfDir, nameOfDirRecord)) {
+                fprintf(stderr, "!WARNING! // rmdir2 // dir opened\n");
+                closedir2(index);
+                break;
+            }
+        }
+    }
+
     struct t2fs_record* recordOfPath;
     recordOfPath = findRecordOfPath(pathname);
 
@@ -1125,6 +1152,11 @@ bool findAndAllocateBitmapsForNewDirectory (int* vacantBlock, int* vacantInode){
 }
 
 bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
+    if(dataPointer == 0 || pathname == NULL) {
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // invalid arguments\n");
+        return ERROR;
+    }
+
     struct t2fs_record* records;
     records = inodeDataPointerToRecords(dataPointer);
 
@@ -1136,20 +1168,19 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
         }
     }
 
+    struct t2fs_record* recordOfFatherDir = malloc(sizeof(struct t2fs_record));
+    *recordOfFatherDir = records[1];
+
     int adressPointer = -1;
 
     char nameOfBeingDeletedDir[MAX_PATH_LENGTH];
     getNameOfDirectoryAtEndOfPath(pathname, nameOfBeingDeletedDir);
-
-    struct t2fs_record* recordOfFatherDir = malloc(sizeof(struct t2fs_record));
-    *recordOfFatherDir = records[1];
 
     if(recordOfFatherDir == NULL || recordOfFatherDir->TypeVal != TYPEVAL_DIRETORIO){
             fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // record of father dir wasn't found\n");
             free(recordOfFatherDir);
             return ERROR;
     }
-
 
     getInodeToBeingWorkedInode(recordOfFatherDir->inodeNumber);
     DWORD firstAdress = beingWorkedInode->dataPtr[0];
@@ -1164,7 +1195,7 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
         }
     }
 
-    if(&records[index] == NULL) {
+    if(adressPointer == -1) {
         records = inodeDataPointerToRecords(secondAdress);
         for(index = 2; index < 16; index++) {
             if(!strcmp(records[index].name,nameOfBeingDeletedDir)){
@@ -1175,7 +1206,7 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
     }
 
     if(adressPointer < 0){
-        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // adressPointer is negative \n");
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // directory not found in direct pointers of inode\n");
         free(recordOfFatherDir);
         return ERROR;
     }
@@ -1192,12 +1223,29 @@ bool searchRecordAndRemoveDir(DWORD dataPointer, char* pathname) {
     inodeRemoveRecordAndReturnBufferBlock(adressPointer, nameOfBeingDeletedDir, bufferBlock);
 
     if(writeBlockToBlockDataSection(bufferBlock, adressPointer)) {
-        fprintf(stderr, "!ERROR! // searchRecordAndRemoveFile // failed to write updated block\n");
+        fprintf(stderr, "!ERROR! // searchRecordAndRemoveDir // failed to write updated block\n");
         free(recordOfFatherDir);
         return ERROR;
     }
 
-    setBitmap2(BITMAP_DADOS, adressPointer, 0);
+    getInodeToBeingWorkedInode(records[index].inodeNumber);
+    DWORD dataPointerToRecordsOfDir = beingWorkedInode->dataPtr[0];
+    DWORD secondDataPointerToRecordsOfDir = beingWorkedInode->dataPtr[1];
+    DWORD singleIndrDataPointerToRecordsOfDir = beingWorkedInode->singleIndPtr;
+    DWORD doubleIndrDataPointerToRecordsOfDir = beingWorkedInode->doubleIndPtr;
+
+    if(dataPointerToRecordsOfDir != INVALID_PTR)
+        setBitmap2(BITMAP_DADOS, dataPointerToRecordsOfDir, 0);
+
+    if(secondDataPointerToRecordsOfDir != INVALID_PTR)
+        setBitmap2(BITMAP_DADOS, secondDataPointerToRecordsOfDir, 0);
+
+    if(singleIndrDataPointerToRecordsOfDir != INVALID_PTR)
+        setBitmap2(BITMAP_DADOS, singleIndrDataPointerToRecordsOfDir, 0);
+
+    if(doubleIndrDataPointerToRecordsOfDir != INVALID_PTR)
+        setBitmap2(BITMAP_DADOS, doubleIndrDataPointerToRecordsOfDir, 0);
+
     setBitmap2(BITMAP_INODE, records[index].inodeNumber, 0);
 
     free(recordOfFatherDir);
