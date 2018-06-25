@@ -264,11 +264,14 @@ int read2 (FILE2 handle, char *buffer, int size) {
     }
 
     if(size > openedFiles[handle].fileInode->bytesFileSize) {
-        fprintf(stderr, "!WARNING! // read2 // argument 'size' is bigger than filesize\n");
+        fprintf(stderr, "!WARNING! // read2 // argument 'size' is bigger than filesize, adjusting\n");
         size = openedFiles[handle].fileInode->bytesFileSize;
     }
 
-    int bufferOfBuffer[1024];
+    int bytesRead = 0;
+
+    char blockBuffer[1024];
+    char bufferOfBuffer[1024];
     int currentPositionOfBuffer = 0;
 
     int bytesToBeReadFromCurrentBlock;
@@ -283,12 +286,13 @@ int read2 (FILE2 handle, char *buffer, int size) {
     int bytesRemainderOfBlocksToBeRead = size - completeBlocksToBeRead*1024 - bytesToBeReadFromCurrentBlock;
 
     if(openedFiles[handle].currentBlock == 0) {
-        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[0]);
-        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+        readBlockToBuffer(openedFiles[handle].fileInode->dataPtr[0],blockBuffer);
+        memcpy(&bufferOfBuffer, &blockBuffer[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
         memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
         currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
         openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+        bytesRead += bytesToBeReadFromCurrentBlock;
         openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
     }
 
@@ -299,12 +303,13 @@ int read2 (FILE2 handle, char *buffer, int size) {
         else
             bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
 
-        readBlockToBeingWorkedBlock(openedFiles[handle].fileInode->dataPtr[1]);
-        memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+        readBlockToBuffer(openedFiles[handle].fileInode->dataPtr[1],blockBuffer);
+        memcpy(&bufferOfBuffer, &blockBuffer[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
         memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
         currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
 
         openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
+        bytesRead += bytesToBeReadFromCurrentBlock;
         openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
     }
 
@@ -322,10 +327,12 @@ int read2 (FILE2 handle, char *buffer, int size) {
             else
                 bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
 
-            readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
-            memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+            readBlockToBuffer(collectionOfDataPointers[index], blockBuffer);
+            memcpy(&bufferOfBuffer, &blockBuffer[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
             memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+
             currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
+            bytesRead += bytesToBeReadFromCurrentBlock;
 
             openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
             openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
@@ -350,10 +357,12 @@ int read2 (FILE2 handle, char *buffer, int size) {
                 else
                     bytesToBeReadFromCurrentBlock = bytesRemainderOfBlocksToBeRead;
 
-                readBlockToBeingWorkedBlock(collectionOfDataPointers[index]);
-                memcpy(&bufferOfBuffer, &beingWorkedBlock[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
+                readBlockToBuffer(collectionOfDataPointers[index],blockBuffer);
+                memcpy(&bufferOfBuffer, &blockBuffer[openedFiles[handle].currentPointer], bytesToBeReadFromCurrentBlock);
                 memcpy(&buffer[currentPositionOfBuffer], &bufferOfBuffer, bytesToBeReadFromCurrentBlock);
+
                 currentPositionOfBuffer += bytesToBeReadFromCurrentBlock;
+                bytesRead += bytesToBeReadFromCurrentBlock;
 
                 openedFiles[handle].currentPointer += bytesToBeReadFromCurrentBlock;
                 openedFiles[handle].currentBlock = (int) (openedFiles[handle].currentPointer / 1024);
@@ -365,7 +374,7 @@ int read2 (FILE2 handle, char *buffer, int size) {
         }
     }
 
-    return SUCCESS;
+    return bytesRead;
 }
 
 
@@ -652,16 +661,11 @@ int seek2 (FILE2 handle, DWORD offset) {
         fprintf(stderr, "!ERROR! // seek2 // file handle invalid\n");
         return ERROR;
     }
-    if(offset < -1)
-    {
-        fprintf(stderr, "!ERROR! // seek2 // offset invalid\n");
-        return ERROR;
-    }
 
-    if(offset >= 0)
-        openedFiles[handle].currentPointer = offset;
-    else if (offset == -1)
+    if (offset == (DWORD) -1)
         openedFiles[handle].currentPointer = openedFiles[handle].fileInode->bytesFileSize - 1;
+    else
+        openedFiles[handle].currentPointer = offset;
 
     return SUCCESS;
 }
@@ -690,7 +694,7 @@ int mkdir2 (char *pathname) {
     }
 
     char *position = rstrstr(pathname, "/");
-    if(position == NULL && pathname[0] == '/') {
+    if(position == NULL && (pathname[0] == '/' || pathname[0] == '.') ) {
         struct t2fs_record* recordOfParentDirectory;
         recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
 
@@ -1294,7 +1298,7 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
         strncpy(newDirectoryName, pathname+1, strlen(pathname));
     }
     else if(position == NULL) {
-        strncpy(newDirectoryName, pathname, strlen(pathname));
+        strncpy(newDirectoryName, pathname, strlen(pathname)+1);
     }
     else{
         subString(pathname, newDirectoryName, (int) (position - pathname) + 1, (int)strlen(pathname) - (int) (position - pathname) -1);

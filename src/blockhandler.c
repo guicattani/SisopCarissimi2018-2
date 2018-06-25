@@ -39,6 +39,21 @@ bool readBlockToBeingWorkedBlock(int blockIndex) {
     return SUCCESS;
 }
 
+bool readBlockToBuffer(int blockIndex, char* buffer) {
+    unsigned char bufferOfBuffer[SECTOR_SIZE];
+    memset(bufferOfBuffer, 0, sizeof(bufferOfBuffer));
+
+    int index;
+    for(index = 0; index < 4; index++) {
+        if(read_sector(blockIndex*controller->boot.blockSize + index, bufferOfBuffer) != 0 ) {
+            fprintf(stderr, "!ERROR! // readBlockToBeingWorkedBlock // error reading sector\n");
+            return ERROR;
+        }
+        memcpy(&buffer[index*SECTOR_SIZE], &bufferOfBuffer, sizeof(bufferOfBuffer));
+    }
+    return SUCCESS;
+}
+
 bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     unsigned char buffer[SECTOR_SIZE];
     int index;

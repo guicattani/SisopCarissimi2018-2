@@ -12,6 +12,8 @@
 unsigned char beingWorkedBlock[1024];
 unsigned char auxiliaryWorkingBlock[1024];
 
+bool readBlockToBuffer(int blockIndex, char* buffer);
+
 bool readBlockToBeingWorkedBlock(int blockIndex);
 
 bool readBlockToAuxiliaryWorkingBlock(int blockIndex);
