@@ -694,7 +694,7 @@ int mkdir2 (char *pathname) {
     }
 
     char *position = rstrstr(pathname, "/");
-    if(position == NULL && (pathname[0] == '/' || pathname[0] == '.') ) {
+    if(position != NULL) {
         struct t2fs_record* recordOfParentDirectory;
         recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
 
@@ -1319,7 +1319,7 @@ bool makeRecordsForNewDir(struct t2fs_record* recordOfParentDirectory, char* pat
         records = inodeDataPointerToRecords(firstAdress);
 
         for(index = 2; index < 16; index++) {
-            if(!strcmp(records[index].name, newDirectoryName)) {
+            if(records[index].TypeVal != TYPEVAL_INVALIDO &&!strcmp(records[index].name, newDirectoryName)) {
                 fprintf(stderr, "!ERROR! // makeRecordsForNewDir // directory with same name is target directory\n");
                 return ERROR;
             }
