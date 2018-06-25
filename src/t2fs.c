@@ -206,15 +206,6 @@ FILE2 open2 (char *filename) {
     free(newOpenedFile);
 
     return emptySpace;
-
-    //TESTES
-    //verifica se arquivo existe no diretorio, vejam o diretory.c pra funções pra ajudar nisso
-    //checar se a estrutura de arquivos abertos openedFiles não está cheia, VER HEADER T2FS
-
-    //criar uma entrada para a estrutura que guarda quais arquivos estão abertos (openedFiles VER O HEADER T2FS)
-    //retorna o número dessa entrada (isso é um handle)
-
-    //cria uma nova entrada para a pra estrutura openedFiles VER HEADER
 }
 
 
@@ -698,18 +689,24 @@ int mkdir2 (char *pathname) {
         return ERROR;
     }
 
-    struct t2fs_record* recordOfParentDirectory;
-    recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
+    char *position = rstrstr(pathname, "/");
+    if(position == NULL && pathname[0] == '/') {
+        struct t2fs_record* recordOfParentDirectory;
+        recordOfParentDirectory = returnRecordOfParentDirectory(pathname);
 
-    if(recordOfParentDirectory == NULL) {
-        fprintf(stderr, "!ERROR! // mkdir2 // record of parent directory not found\n");
-        return ERROR;
+        if(recordOfParentDirectory == NULL) {
+            fprintf(stderr, "!ERROR! // mkdir2 // record of parent directory not found\n");
+            return ERROR;
+        }
+
+        if(!makeRecordsForNewDir(recordOfParentDirectory, pathname))
+            return SUCCESS;
     }
 
-    if(!makeRecordsForNewDir(recordOfParentDirectory, pathname))
-        return SUCCESS;
-
-
+    else {
+        if(!makeRecordsForNewDir(currentDirectory, pathname))
+                return SUCCESS;
+    }
 
     return ERROR;
 }

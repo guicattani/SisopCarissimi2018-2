@@ -53,33 +53,6 @@ bool readBlockToAuxiliaryWorkingBlock(int blockIndex) {
     return SUCCESS;
 }
 
-//bool writeBeingWorkedBlockToInodesSection(int blockToBeWrittenIndex) {
-//    unsigned char buffer[SECTOR_SIZE];
-//    int index;
-//    for(index = 0; index < 4; index++) {
-//        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
-//
-//        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + inodesStartBlock + index, buffer) != 0 )
-//            return ERROR;
-//    }
-//
-//    return SUCCESS;
-//}
-//
-//bool writeBeingWorkedBlockToDataSection(int blockToBeWrittenIndex) {
-//    unsigned char buffer[SECTOR_SIZE];
-//    int index;
-//    for(index = 0; index < 4; index++) {
-//        memcpy(&buffer, &beingWorkedBlock[index*SECTOR_SIZE], sizeof(buffer));
-//
-//        if(write_sector(blockToBeWrittenIndex * controller->boot.blockSize + blocksStartBlock + index, buffer) != 0 )
-//            return ERROR;
-//    }
-//
-//    return SUCCESS;
-//}
-
-
 bool writeInodeToInodeDataSection(struct t2fs_inode* inode, int inodeIndex) {
 
     int inodeStructSize = sizeof(struct t2fs_inode);

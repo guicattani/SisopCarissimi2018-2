@@ -9,8 +9,8 @@
 
 #define	INVALID_PTR	-1
 
-#define SIZEIDENTIFY 45
-#define GROUPNAMESTRING "Guilherme Cattani 243589\nAugusto Timm 113887"
+#define SIZEIDENTIFY 25
+#define GROUPNAMESTRING "Guilherme Cattani 243589"
 
 #define MAX_OPEN_FILES 10
 #define MAX_OPEN_DIRECTORIES 10
