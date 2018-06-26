@@ -127,18 +127,18 @@ FILE2 create2 (char *filename) {
 
     position = strstr(cleanedPath, "../");
     if(position) {
-        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
-        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
-        inodeNumber = records[1].inodeNumber;
+//        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+//        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+//        inodeNumber = records[1].inodeNumber;
 
         subString(filename, cleanedPath, 3, (int) strlen(cleanedPath) - 3);
     }
 
     position = strstr(cleanedPath, "..");
     if(position) {
-        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
-        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
-        inodeNumber = records[1].inodeNumber;
+//        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+//        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+//        inodeNumber = records[1].inodeNumber;
 
         subString(filename, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
     }
