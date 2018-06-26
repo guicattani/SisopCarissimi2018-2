@@ -205,24 +205,66 @@ int delete2 (char *filename) {
 
     }
 
+    int inodeNumber = 0;
+    char cleanedPath[MAX_FILE_NAME_SIZE];
     char nameOfFile[MAX_FILE_NAME_SIZE];
+
 
     char* position = rstrstr(filename, "/");
     if(position == NULL) {
         memcpy(nameOfFile, filename, strlen(filename)+1);
+        memcpy(cleanedPath, filename, strlen(filename)+1);
     }
     else if(position == filename) {
         memcpy(nameOfFile, filename+1, strlen(filename));
+        memcpy(cleanedPath, filename+1, strlen(filename));
     }
     else{
+        subString(filename, cleanedPath, 0, (int) (position - filename) );
         subString(filename, nameOfFile, (int) (position - filename) + 1, (int)strlen(filename) - (int) (position - filename) -1);
     }
 
     char pathOfDir[MAX_FILE_NAME_SIZE];
     getNameOfDirectoryAtEndOfPath(filename,pathOfDir);
+    struct t2fs_record* record = returnRecordOfParentDirectory(filename);
 
-    struct t2fs_record* record = findRecordOfPath(pathOfDir);
-    getInodeToBeingWorkedInode(record->inodeNumber);
+    if(record != NULL) {
+        inodeNumber = record->inodeNumber;
+    }
+
+    position = strstr(cleanedPath, "../");
+    if(position) {
+//        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+//        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+//        inodeNumber = records[1].inodeNumber;
+
+        subString(filename, cleanedPath, 3, (int) strlen(cleanedPath) - 3);
+    }
+
+    position = strstr(cleanedPath, "..");
+    if(position) {
+//        getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+//        struct t2fs_record* records = inodeDataPointerToRecords(beingWorkedInode->dataPtr[0]);
+//        inodeNumber = records[1].inodeNumber;
+
+        subString(filename, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
+    }
+
+    position = strstr(cleanedPath, "./");
+    if(position) {
+        subString(filename, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
+    }
+
+    position = strstr(cleanedPath, ".");
+    if(position) {
+        subString(filename, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
+    }
+
+    if(filename[0] == '/') {
+        inodeNumber = rootDirectory->inodeNumber;
+    }
+
+    getInodeToBeingWorkedInode(inodeNumber);
 
     int firstAdress = beingWorkedInode->dataPtr[0];;
     int secondAdress = beingWorkedInode->dataPtr[1];
