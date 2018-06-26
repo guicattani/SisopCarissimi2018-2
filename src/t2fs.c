@@ -88,16 +88,67 @@ FILE2 create2 (char *filename) {
         fprintf(stderr, "!ERROR! // create2 // filename is NULL\n");
         return ERROR;
     }
-    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+
+    if(filename[0] == '.' && strlen(filename) == 1) {
+        fprintf(stderr, "!ERROR! // create2 // reserved character\n");
+        return ERROR;
+    }
+
+    if(filename[0] == '.' && filename[1] == '.' && strlen(filename) == 2) {
+        fprintf(stderr, "!ERROR! // create2 // reserved character\n");
+        return ERROR;
+    }
+
+    int inodeNumber = 0;
+
+    char cleanedPath[MAX_FILE_NAME_SIZE];
+    char nameOfFile[MAX_FILE_NAME_SIZE];
+
+
+    char* position = rstrstr(filename, "/");
+    if(position == NULL) {
+        memcpy(nameOfFile, filename, strlen(filename)+1);
+        memcpy(cleanedPath, filename, strlen(filename)+1);
+    }
+    else if(position == filename) {
+        memcpy(nameOfFile, filename+1, strlen(filename));
+        memcpy(cleanedPath, filename+1, strlen(filename));
+    }
+    else{
+        subString(filename, cleanedPath, 0, (int) (position - filename) );
+        subString(filename, nameOfFile, (int) (position - filename) + 1, (int)strlen(filename) - (int) (position - filename) -1);
+    }
+
+    struct t2fs_record* record = returnRecordOfParentDirectory(filename);
+
+    if(record != NULL) {
+        inodeNumber = record->inodeNumber;
+    }
+
+    position = strstr(cleanedPath, "../");
+    if(position) {
+        subString(filename, cleanedPath, 3, (int) strlen(cleanedPath) - 3);
+    }
+
+    position = strstr(cleanedPath, "./");
+    if(position) {
+        subString(filename, cleanedPath, 2, (int) strlen(cleanedPath) - 2);
+    }
+
+    if(filename[0] == '/') {
+        inodeNumber = rootDirectory->inodeNumber;
+    }
+
+    getInodeToBeingWorkedInode(inodeNumber);
 
     int firstAdress = beingWorkedInode->dataPtr[0];
     int secondAdress = beingWorkedInode->dataPtr[1];
 //    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
 //    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
 
-    int handle = searchVacantSpaceAndCreateFile(firstAdress, filename);
+    int handle = searchVacantSpaceAndCreateFile(firstAdress, nameOfFile, filename);
     if(secondAdress != INVALID_PTR && handle < 0)
-        handle = searchVacantSpaceAndCreateFile(secondAdress, filename);
+        handle = searchVacantSpaceAndCreateFile(secondAdress, nameOfFile, filename);
     if(handle < 0)  {
         fprintf(stderr, "!ERROR! // create2 // failed creating file not enough space in records\n");
         return ERROR;
@@ -136,16 +187,33 @@ int delete2 (char *filename) {
 
     }
 
-    getInodeToBeingWorkedInode(currentDirectory->inodeNumber);
+    char nameOfFile[MAX_FILE_NAME_SIZE];
 
-    int firstAdress = beingWorkedInode->dataPtr[0];
+    char* position = rstrstr(filename, "/");
+    if(position == NULL) {
+        memcpy(nameOfFile, filename, strlen(filename)+1);
+    }
+    else if(position == filename) {
+        memcpy(nameOfFile, filename+1, strlen(filename));
+    }
+    else{
+        subString(filename, nameOfFile, (int) (position - filename) + 1, (int)strlen(filename) - (int) (position - filename) -1);
+    }
+
+    char pathOfDir[MAX_FILE_NAME_SIZE];
+    getNameOfDirectoryAtEndOfPath(filename,pathOfDir);
+
+    struct t2fs_record* record = findRecordOfPath(pathOfDir);
+    getInodeToBeingWorkedInode(record->inodeNumber);
+
+    int firstAdress = beingWorkedInode->dataPtr[0];;
     int secondAdress = beingWorkedInode->dataPtr[1];
 //    int singleIndirectPointer = beingWorkedInode->singleIndPtr;
 //    int doubleIndirectPointer = beingWorkedInode->doubleIndPtr;
 
-    if(firstAdress != INVALID_PTR && !searchRecordAndRemoveFile(firstAdress, filename))
+    if(firstAdress != INVALID_PTR && !searchRecordAndRemoveFile(firstAdress, nameOfFile))
         return SUCCESS;
-    else if(secondAdress != INVALID_PTR && !searchRecordAndRemoveFile(secondAdress, filename))
+    if(secondAdress != INVALID_PTR && !searchRecordAndRemoveFile(secondAdress, nameOfFile))
         return SUCCESS;
 
     fprintf(stderr, "!ERROR! // delete2 // failed deleting file\n");
@@ -1289,7 +1357,7 @@ bool searchRecordAndRemoveFile(DWORD dataPointer, char* filename) {
 }
 
 
-int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename) {
+int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename, char* fullPath) {
     struct t2fs_record* records;
     records = inodeDataPointerToRecords(dataPointer);
 
@@ -1324,7 +1392,7 @@ int searchVacantSpaceAndCreateFile(DWORD dataPointer, char* filename) {
 
     free(newRecord);
 
-    int fileHandle = open2(filename);
+    int fileHandle = open2(fullPath);
     if(fileHandle == -1) {
         fprintf(stderr, "!ERROR! // searchVacantSpaceAndCreateFile // tried to open created file and failed\n");
         return ERROR;
